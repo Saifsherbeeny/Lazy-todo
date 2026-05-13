@@ -72,6 +72,7 @@ def complete_task(task_id):
         db.session.commit()
         
     return redirect(url_for('home', confetti='true'))
-
+with app.app_context():
+    db.create_all()
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True)
