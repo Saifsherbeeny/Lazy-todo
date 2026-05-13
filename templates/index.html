@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Lazy To-Do</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: white;
+            text-align: center;
+        }
+        .task-card {
+            margin: 10px auto;
+            padding: 20px;
+            width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .done {
+            text-decoration: line-through;
+            color: gray;
+        }
+        button {
+            cursor: pointer;
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Inside <body> -->
+<form action="/add" method="POST">
+    <input type="text" name="new_task" placeholder="What are we avoiding?" required>
+    <input type="date" name="due_date" required>
+    <button type="submit">Add Task</button>
+</form>
+
+<div id="todo-list">
+    {% for t in tasks %}
+    <div class="task-card">
+        <h3 class="{{ 'done' if t.is_done }}">{{ t.content }}</h3>
+        <p>Due: {{ t.due_date }}</p>
+        
+        {% if not t.is_done %}
+            <a href="/complete/{{ t.id }}" onclick="confetti()">
+                <button type="button">OATH: I did it.</button>
+            </a>
+        {% else %}
+            <p style="color: purple; font-weight: bold;">{{ t.status_message }}</p>
+            <span>✅ Completed</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+<script>
+    // 1. Check the URL for the "confetti" flag
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('confetti') === 'true') {
+        // 2. Fire the confetti!
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+        // 3. (Optional) Clean the URL so it doesn't pop again if you refresh manually
+        window.history.replaceState({}, document.title, "/");
+    }
+</script>
+</body>
+</html>
