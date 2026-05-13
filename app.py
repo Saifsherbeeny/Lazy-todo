@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask import session
 from datetime import datetime
 import os
 
 app = Flask(__name__)
-
+app.secret_key = 'lazy_secret_key_123'
 # This tells Flask where the database file will live on your Mac
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data_v2.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -21,11 +22,18 @@ class Task(db.Model):
     due_time = db.Column(db.String(50))
     is_done = db.Column(db.Boolean, default=False)
     status_message = db.Column(db.String(200), default="")
+    owner = db.Column(db.String(50), default="Saif")
+
+@app.route('/login/<name>')
+def login(name):
+    session['user'] = name # This saves the name in the browser's memory
+    return redirect('/')
 
 @app.route('/')
 def home():
-    all_tasks = Task.query.all()  # This gets all the tasks from the database
-    return render_template('index.html', tasks=all_tasks)
+    current_user = session.get('user', 'Saif') # Default to 'Saif'
+    all_tasks = Task.query.filter_by(owner=current_user).all() 
+    return render_template('index.html', tasks=all_tasks, user=current_user)
 
 @app.route('/add', methods=['POST'])
 def add_task():
@@ -33,6 +41,7 @@ def add_task():
     due_date = request.form.get('due_date')
     due_time = request.form.get('due_time')
     category = request.form.get('category', 'General')
+    current_user = session.get('user', 'Saif')
     
     if task_text:
         # 1. Create the object
@@ -40,7 +49,8 @@ def add_task():
             content=task_text, 
             due_date=due_date, 
             due_time=due_time, 
-            category=category
+            category=category,
+            owner=current_user
         )
         # 2. Add it to the 'session' (like putting it in the checkout basket)
         db.session.add(new_task)
@@ -72,6 +82,14 @@ def complete_task(task_id):
         db.session.commit()
         
     return redirect(url_for('home', confetti='true'))
+
+@app.route('/delete/<int:id>')
+def delete(id):
+    task_to_delete = Task.query.get_or_404(id)
+    db.session.delete(task_to_delete)
+    db.session.commit()
+    return redirect('/')
+
 with app.app_context():
     db.create_all()
 if __name__ == '__main__':

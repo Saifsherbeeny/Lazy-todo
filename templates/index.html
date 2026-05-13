@@ -52,6 +52,8 @@
             <p style="color: purple; font-weight: bold;">{{ t.status_message }}</p>
             <span>✅ Completed</span>
         {% endif %}
+        <br><br>
+    <a href="/delete/{{ t.id }}" style="color: #ccc; font-size: 0.8rem; text-decoration: none;">Remove Task</a>
     </div>
     {% endfor %}
 </div>
