@@ -78,32 +78,34 @@
         {% for routine in tasks|map(attribute='routine_name')|unique %}
             {% if routine %}
                 
-                {% set sub_tasks = [] %}
-                {% for t in tasks %}
-                    {% if t.routine_name == routine %}
-                        {% if sub_tasks.append(t) %}{% endif %}
+                {% set routine_tasks = tasks|selectattr('routine_name', 'equalto', routine)|list %}
+                {% set total_count = routine_tasks|length %}
+                
+                {% set remaining_items = namespace(count=0) %}
+                {% for t in routine_tasks %}
+                    {% if not t.is_done %}
+                        {% set remaining_items.count = remaining_items.count + 1 %}
                     {% endif %}
                 {% endfor %}
 
-                {% set all_done = true %}
-                {% for st in sub_tasks %}
-                    {% if not st.is_done %}
-                        {% set all_done = false %}
-                    {% endif %}
-                {% endfor %}
+                {% set all_done = false %}
+                {% if total_count > 0 and remaining_items.count == 0 %}
+                    {% set all_done = true %}
+                {% endif %}
 
                 {% if not all_done %}
                 <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;" open>
                 {% else %}
                 <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;">
                 {% endif %}
-                    <summary style="cursor: pointer; font-weight: bold; padding: 10px; font-size: 1.1rem; color: {{ 'gray' if all_done else '#2f3542' }}; text-decoration: {{ 'line-through' if all_done else 'none' }}; display: flex; justify-content: space-between; align-items: center;">
+                    
+                    <summary class="routine-summary {{ 'routine-done' if all_done }}">
                         <span>{{ routine }}</span>
                         <span>{{ '✅ Done' if all_done else '⏳ In Progress' }}</span>
                     </summary>
                     
                     <div style="padding: 10px 0 0 10px; display: flex; flex-direction: column; gap: 10px;">
-                        {% for t in sub_tasks %}
+                        {% for t in routine_tasks %}
                         <div style="border-left: 3px solid #1e90ff; padding-left: 10px; margin-bottom: 5px;">
                             <span class="{{ 'done' if t.is_done }}" style="font-weight: 500; font-size: 1rem;">{{ t.content }}</span>
                             <div style="margin-top: 5px; display: flex; gap: 10px; align-items: center;">
