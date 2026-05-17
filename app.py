@@ -202,7 +202,7 @@ def home():
         {"text": "Waste no more time arguing about what a good man should be. Be one.", "author": "Marcus Aurelius"}
     ]
     selected_wisdom = random.choice(wisdom_quotes)
-    return render_template('index.html', tasks=tasks, name=current_user.name, wisdom=selected_wisdom)
+    return render_template('index.html', tasks=tasks, name=current_user.username, wisdom=selected_wisdom)
 
 @app.route('/add', methods=['POST'])
 @login_required
