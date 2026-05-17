@@ -103,18 +103,29 @@ def inject_routine(routine_type):
     routines = {
         'morning': [
             {"content": "Drink a big glass of water", "category": "Health"},
+            {"content": "avoid socials and entertainment", "category": "Health"},
+            {"content": "5-minuute stretch", "category": "Health"},
+            {"content": "brush teeth and wash up", "category": "Health"},
+            {"content": "reflect", "category": "Mind"},
+            {"content": "Make breakfast", "category": "Health"},
             {"content": "Check OATH app for shift updates", "category": "Work"},
-            {"content": "Review today's MIASHS lectures", "category": "Uni"}
+            {"content": "Review this week's lectures", "category": "Uni"}
         ],
         'night': [
             {"content": "5-minute stretch & wind down", "category": "Health"},
             {"content": "Pack bag for uni tomorrow", "category": "Uni"},
+            {"content": "Glass of water next to bed", "category": "Health"},
+            {"content": "Set alarms for tomorrow", "category": "Work"},
             {"content": "Put phone on charger away from bed", "category": "General"}
+
         ],
         'travel': [
             {"content": "Double-check passport & ID", "category": "Travel"},
+            {"content": "Check visa requirements", "category": "Travel"},
+            {"content": "Double-check Transportation", "category": "Travel"},
             {"content": "Charge phone and power bank to 100%", "category": "Travel"},
-            {"content": "Pack headphones and charger", "category": "Travel"}
+            {"content": "Pack headphones and charger", "category": "Travel"},
+            {"content": "Double-check packed bags", "category": "Travel"}
         ]
     }
     
@@ -125,7 +136,7 @@ def inject_routine(routine_type):
                 category=task_data["category"],
                 due_date=datetime.now().strftime('%Y-%m-%d'),
                 user_id=current_user.id,
-                routine_name=names[routine_type] # Group them together!
+                routine_name=names[routine_type] 
             )
             db.session.add(new_task)
         db.session.commit()
@@ -234,7 +245,7 @@ def complete_task(task_id):
             elif today > due:
                 task.status_message = "Late... Try and do better."
             else:
-                task.status_message = "On time. respect."
+                task.status_message = "On time... respect."
         
         db.session.commit()
         

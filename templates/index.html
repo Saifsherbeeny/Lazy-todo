@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lazy To-Do</title>
+    <title>OATH : Lazy To-Do</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         body {
@@ -29,14 +29,45 @@
             border: none;
             padding: 5px 10px;
             border-radius: 5px;
+            /* Dark Mode Color Overrides */
+        body.dark-theme {
+            background-color: #121212 !important;
+            color: #ffffff !important;
+        }
+        body.dark-theme .task-card, 
+        body.dark-theme details {
+            background-color: #1e1e1e !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+        }
+        body.dark-theme .routine-summary {
+            color: #e0e0e0 !important;
+        }
+        body.dark-theme h2, body.dark-theme h3, body.dark-theme p {
+            color: #ffffff !important;
+        }
+        body.dark-theme input, body.dark-theme textarea {
+            background-color: #2d2d2d !important;
+            color: white !important;
+            border: 1px solid #444 !important;
+        }
+        body.dark-theme div[style*="background: #f8f9fa"] {
+            background-color: #1e1e1e !important;
+            border: 1px solid #333 !important;
+        }
+        body.dark-theme h4 {
+            color: #e0e0e0 !important;
+        }
         }
     </style>
 </head>
 <body>
     
-    <p style="text-align: right; margin-right: 20px; margin-top: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+        <button id="theme-toggle" type="button" style="background: #57606f; font-size: 0.85rem; padding: 5px 10px;">
+            🌙 Toggle Theme
+        </button>
         <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
-    </p>
+    </div>
 
     <h2>Lazy To-Do</h2>
 
@@ -158,6 +189,28 @@
             });
             window.history.replaceState({}, document.title, "/");
         }
+    </script>
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme');
+
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            themeToggleBtn.textContent = '☀️ Light Mode';
+        }
+
+        themeToggleBtn.addEventListener('click', function () {
+            document.body.classList.toggle('dark-theme');
+            
+            let theme = 'light';
+            if (document.body.classList.contains('dark-theme')) {
+                theme = 'dark';
+                themeToggleBtn.textContent = '☀️ Light Mode';
+            } else {
+                themeToggleBtn.textContent = '🌙 Dark Mode';
+            }
+            localStorage.setItem('theme', theme); 
+        });
     </script>
 </body>
 </html>
