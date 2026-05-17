@@ -195,6 +195,27 @@ def add_task():
         
     return redirect(url_for('home'))
 
+
+@app.route('/add-to-routine/<string:routine_name>', methods=['POST'])
+@login_required
+def add_to_routine(routine_name):
+    task_content = request.form.get('routine_task_content')
+    
+    if task_content:
+        new_task = Task(
+            content=task_content,
+            category="Custom Item",
+            due_date=datetime.now().strftime('%Y-%m-%d'),
+            user_id=current_user.id,
+            routine_name=routine_name # This locks it into this specific folder!
+        )
+        db.session.add(new_task)
+        db.session.commit()
+        
+    return redirect(url_for('home'))
+
+
+
 # Complete task
 @app.route('/complete/<int:task_id>')
 def complete_task(task_id):
@@ -211,9 +232,9 @@ def complete_task(task_id):
             if today < due:
                 task.status_message = "Early! Look at you being productive."
             elif today > due:
-                task.status_message = "Late... as expected for a lazy person."
+                task.status_message = "Late... Try and do better."
             else:
-                task.status_message = "On time. Barely."
+                task.status_message = "On time. respect."
         
         db.session.commit()
         
