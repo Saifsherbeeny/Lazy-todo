@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lazy To-Do</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <p style="text-align: right; margin-right: 20px;"><a href="/logout">Logout</a></p>
     <style>
         body {
             font-family: sans-serif;
@@ -32,47 +33,107 @@
     </style>
 </head>
 <body>
-    <!-- Inside <body> -->
-<form action="/add" method="POST">
-    <input type="text" name="new_task" placeholder="What are we avoiding?" required>
-    <input type="date" name="due_date" required>
-    <button type="submit">Add Task</button>
-</form>
-
-<div id="todo-list">
-    {% for t in tasks %}
-    <div class="task-card">
-        <h3 class="{{ 'done' if t.is_done }}">{{ t.content }}</h3>
-        <p>Due: {{ t.due_date }}</p>
-        
-        {% if not t.is_done %}
-            <a href="/complete/{{ t.id }}" onclick="confetti()">
-                <button type="button">OATH: I did it.</button>
-            </a>
-        {% else %}
-            <p style="color: purple; font-weight: bold;">{{ t.status_message }}</p>
-            <span>✅ Completed</span>
-        {% endif %}
-        <br><br>
-    <a href="/delete/{{ t.id }}" style="color: #ccc; font-size: 0.8rem; text-decoration: none;">Remove Task</a>
-    </div>
-    {% endfor %}
-</div>
-<script>
-    // 1. Check the URL for the "confetti" flag
-    const urlParams = new URLSearchParams(window.location.search);
     
-    if (urlParams.get('confetti') === 'true') {
-        // 2. Fire the confetti!
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+    <p style="text-align: right; margin-right: 20px; margin-top: 20px;">
+        <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
+    </p>
 
-        // 3. (Optional) Clean the URL so it doesn't pop again if you refresh manually
-        window.history.replaceState({}, document.title, "/");
-    }
-</script>
+    <h2>Lazy To-Do</h2>
+
+    <form action="/add" method="POST">
+        <input type="text" name="new_task" placeholder="What are we avoiding?" required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+        <input type="date" name="due_date" required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+        <button type="submit">Add Task</button>
+    </form>
+
+    <div style="margin: 20px auto; max-width: 340px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e9ecef;">
+        <h4 style="margin-top:0; color:#495057;">⚡ Fast Habits Injection</h4>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <a href="/inject-routine/morning"><button type="button" style="background: #1e90ff; width:100%;">+ Add Morning Routine</button></a>
+            <a href="/inject-routine/night"><button type="button" style="background: #57606f; width:100%;">+ Add Night Routine</button></a>
+            <a href="/inject-routine/travel"><button type="button" style="background: #ffa500; width:100%;">+ Add Travel Prep</button></a>
+        </div>
+    </div>
+
+    <div id="todo-list">
+        
+        {% for t in tasks if not t.routine_name %}
+        <div class="task-card">
+            <h3 class="{{ 'done' if t.is_done }}">{{ t.content }}</h3>
+            <p>Due: {{ t.due_date }}</p>
+            
+            {% if not t.is_done %}
+                <a href="/complete/{{ t.id }}" onclick="confetti()">
+                    <button type="button">OATH: I did it.</button>
+                </a>
+            {% else %}
+                <p style="color: purple; font-weight: bold;">{{ t.status_message }}</p>
+                <span>✅ Completed</span>
+            {% endif %}
+            <br><br>
+            <a href="/delete/{{ t.id }}" style="color: #ccc; font-size: 0.8rem; text-decoration: none;">Remove Task</a>
+        </div>
+        {% endfor %}
+
+        {% for routine in tasks|map(attribute='routine_name')|unique %}
+            {% if routine %}
+                
+                {% set sub_tasks = [] %}
+                {% for t in tasks %}
+                    {% if t.routine_name == routine %}
+                        {% if sub_tasks.append(t) %}{% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% set all_done = true %}
+                {% for st in sub_tasks %}
+                    {% if not st.is_done %}
+                        {% set all_done = false %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if not all_done %}
+                <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;" open>
+                {% else %}
+                <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;">
+                {% endif %}
+                    <summary style="cursor: pointer; font-weight: bold; padding: 10px; font-size: 1.1rem; color: {{ 'gray' if all_done else '#2f3542' }}; text-decoration: {{ 'line-through' if all_done else 'none' }}; display: flex; justify-content: space-between; align-items: center;">
+                        <span>{{ routine }}</span>
+                        <span>{{ '✅ Done' if all_done else '⏳ In Progress' }}</span>
+                    </summary>
+                    
+                    <div style="padding: 10px 0 0 10px; display: flex; flex-direction: column; gap: 10px;">
+                        {% for t in sub_tasks %}
+                        <div style="border-left: 3px solid #1e90ff; padding-left: 10px; margin-bottom: 5px;">
+                            <span class="{{ 'done' if t.is_done }}" style="font-weight: 500; font-size: 1rem;">{{ t.content }}</span>
+                            <div style="margin-top: 5px; display: flex; gap: 10px; align-items: center;">
+                                {% if not t.is_done %}
+                                    <a href="/complete/{{ t.id }}" onclick="confetti()" style="text-decoration: none;">
+                                        <button type="button" style="padding: 3px 8px; font-size: 0.8rem; background: #2ed573;">OATH</button>
+                                    </a>
+                                {% else %}
+                                    <span style="color: green; font-size: 0.85rem;">✅ Done</span>
+                                {% endif %}
+                                <a href="/delete/{{ t.id }}" style="color: #ff4757; font-size: 0.8rem; text-decoration: none;">Delete</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </details>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('confetti') === 'true') {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+            window.history.replaceState({}, document.title, "/");
+        }
+    </script>
 </body>
 </html>

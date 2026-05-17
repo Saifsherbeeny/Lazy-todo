@@ -32,8 +32,9 @@ class Task(db.Model):
     due_time = db.Column(db.String(50))
     is_done = db.Column(db.Boolean, default=False)
     status_message = db.Column(db.String(200), default="")
-    # This points directly to the User's unique ID number
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
+    # NEW LINE: Tracks if this task belongs to a grouped routine
+    routine_name = db.Column(db.String(100), nullable=True)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -89,6 +90,48 @@ def logout():
 
 
 #AAAAAAAAA
+@app.route('/inject-routine/<string:routine_type>')
+@login_required
+def inject_routine(routine_type):
+    # Map raw types to display names
+    names = {
+        'morning': '☀️ Morning Routine',
+        'night': '🌙 Night Routine',
+        'travel': '✈️ Travel Prep'
+    }
+    
+    routines = {
+        'morning': [
+            {"content": "Drink a big glass of water", "category": "Health"},
+            {"content": "Check OATH app for shift updates", "category": "Work"},
+            {"content": "Review today's MIASHS lectures", "category": "Uni"}
+        ],
+        'night': [
+            {"content": "5-minute stretch & wind down", "category": "Health"},
+            {"content": "Pack bag for uni tomorrow", "category": "Uni"},
+            {"content": "Put phone on charger away from bed", "category": "General"}
+        ],
+        'travel': [
+            {"content": "Double-check passport & ID", "category": "Travel"},
+            {"content": "Charge phone and power bank to 100%", "category": "Travel"},
+            {"content": "Pack headphones and charger", "category": "Travel"}
+        ]
+    }
+    
+    if routine_type in routines:
+        for task_data in routines[routine_type]:
+            new_task = Task(
+                content=task_data["content"],
+                category=task_data["category"],
+                due_date=datetime.now().strftime('%Y-%m-%d'),
+                user_id=current_user.id,
+                routine_name=names[routine_type] # Group them together!
+            )
+            db.session.add(new_task)
+        db.session.commit()
+        
+    return redirect(url_for('home'))
+
 @app.route('/')
 @login_required # Anyone trying to sneak in will be bounced to the login page
 def home():
