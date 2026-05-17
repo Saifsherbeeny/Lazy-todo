@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+import random
 from flask import session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -175,7 +176,6 @@ def add_custom_routine():
         
     return redirect(url_for('home'))
 
-import random
 
 @app.route('/')
 @login_required
