@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask import session
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 
@@ -12,8 +14,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login' 
 # This is our 'Model' - it's the Python version of that Table Blueprint
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    tasks = db.relationship('Task', backref='owner_user', lazy=True)
+
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(200), nullable=False)
@@ -22,39 +32,87 @@ class Task(db.Model):
     due_time = db.Column(db.String(50))
     is_done = db.Column(db.Boolean, default=False)
     status_message = db.Column(db.String(200), default="")
-    owner = db.Column(db.String(50), default="Saif")
+    # This points directly to the User's unique ID number
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) 
 
-@app.route('/login/<name>')
-def login(name):
-    session['user'] = name # This saves the name in the browser's memory
-    return redirect('/')
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
 
+#AAAAAA
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Check if email already exists
+        user_exists = User.query.filter_by(email=email).first()
+        if user_exists:
+            return "Email already registered!", 400
+            
+        # Hash the password for security before saving
+        hashed_password = generate_password_hash(password, method='scrypt')
+        new_user = User(email=email, password=hashed_password)
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        login_user(new_user) # Automatically log them in after signing up
+        return redirect(url_for('home'))
+        
+    return render_template('signup.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(email=email).first()
+        
+        # Check if user exists and password matches the hash
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            return "Invalid credentials!", 401
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+#AAAAAAAAA
 @app.route('/')
+@login_required # Anyone trying to sneak in will be bounced to the login page
 def home():
-    current_user = session.get('user', 'Saif') # Default to 'Saif'
-    all_tasks = Task.query.filter_by(owner=current_user).all() 
-    return render_template('index.html', tasks=all_tasks, user=current_user)
+    # Only get tasks where user_id matches the logged-in user
+    all_tasks = Task.query.filter_by(user_id=current_user.id).all()
+    return render_template('index.html', tasks=all_tasks)
 
 @app.route('/add', methods=['POST'])
+@login_required
 def add_task():
     task_text = request.form.get('new_task')
     due_date = request.form.get('due_date')
     due_time = request.form.get('due_time')
     category = request.form.get('category', 'General')
-    current_user = session.get('user', 'Saif')
     
     if task_text:
-        # 1. Create the object
         new_task = Task(
             content=task_text, 
             due_date=due_date, 
             due_time=due_time, 
             category=category,
-            owner=current_user
+            user_id=current_user.id # Assigns to the logged-in user
         )
-        # 2. Add it to the 'session' (like putting it in the checkout basket)
         db.session.add(new_task)
-        # 3. Commit it (like hitting 'Pay' to make it official)
         db.session.commit()
         
     return redirect(url_for('home'))
