@@ -8,7 +8,6 @@ import os
 
 app = Flask(__name__)
 app.secret_key = 'lazy_secret_key_123'
-# This tells Flask where the database file will live on your Mac
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data_v2.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -17,7 +16,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' 
-# This is our 'Model' - it's the Python version of that Table Blueprint
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
@@ -41,7 +39,6 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 #AAAAAA
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -178,12 +175,34 @@ def add_custom_routine():
         
     return redirect(url_for('home'))
 
+import random
+
 @app.route('/')
-@login_required # Anyone trying to sneak in will be bounced to the login page
+@login_required
 def home():
-    # Only get tasks where user_id matches the logged-in user
-    all_tasks = Task.query.filter_by(user_id=current_user.id).all()
-    return render_template('index.html', tasks=all_tasks)
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+    wisdom_quotes = [
+        # 1
+        {"text": "Observation is a passive science, experimentation an active science.", "author": "Claude Bernard"},
+        {"text": "An unexamined life is not worth living.", "author": "Socrates"},
+        {"text": "Nature does not hurry, yet everything is accomplished.", "author": "Lao Tzu"},
+        {"text": "It is not that I am so smart, it is just that I stay with problems longer.", "author": "Albert Einstein"},
+        {"text": "The major value in life is not what you get. The major value in life is what you become.", "author": "Jim Rohn"},
+        #2
+        {"text": "The secret of getting ahead is getting started.", "author": "Mark Twain"},
+        {"text": "He who has a why to live can bear almost any how.", "author": "Friedrich Nietzsche"},
+        {"text": "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", "author": "Aristotle"},
+        {"text": "Concentrate all your thoughts upon the work at hand. The sun's rays do not burn until brought to a focus.", "author": "Alexander Graham Bell"},
+        {"text": "It always seems impossible until it's done.", "author": "Nelson Mandela"},
+        #3
+        {"text": "True wealth is the wealth of the soul.", "author": "Prophet Muhammad (Hadith)"},
+        {"text": "The mind is everything. What you think you become.", "author": "Buddha"},
+        {"text": "Commit your actions to the Lord, and your plans will succeed.", "author": "Proverbs 16:3"},
+        {"text": "You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.", "author": "Bhagavad Gita"},
+        {"text": "Waste no more time arguing about what a good man should be. Be one.", "author": "Marcus Aurelius"}
+    ]
+    selected_wisdom = random.choice(wisdom_quotes)
+    return render_template('index.html', tasks=tasks, name=current_user.name, wisdom=selected_wisdom)
 
 @app.route('/add', methods=['POST'])
 @login_required
