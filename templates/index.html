@@ -53,6 +53,18 @@
             <a href="/inject-routine/night"><button type="button" style="background: #57606f; width:100%;">+ Add Night Routine</button></a>
             <a href="/inject-routine/travel"><button type="button" style="background: #ffa500; width:100%;">+ Add Travel Prep</button></a>
         </div>
+        <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 15px 0;">
+        
+        <details style="text-align: left;">
+            <summary style="cursor: pointer; font-weight: bold; font-size: 0.9rem; color: #1e90ff;">
+                🛠️ Build a Custom Task Group
+            </summary>
+            <form action="/add-custom-routine" method="POST" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                <input type="text" name="custom_routine_name" placeholder="Group Name (e.g., Gym Routine)" required style="padding: 6px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem;">
+                <textarea name="custom_tasks" placeholder="Tasks split by commas (e.g., Bench press, Squats, Cardio)" required style="padding: 6px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem; font-family: sans-serif; resize: vertical; min-height: 50px;"></textarea>
+                <button type="submit" style="background: #2ed573; font-size: 0.85rem; padding: 6px;">Create Group</button>
+            </form>
+        </details>
     </div>
 
     <div id="todo-list">
@@ -100,7 +112,12 @@
                 {% endif %}
                     
                     <summary class="routine-summary {{ 'routine-done' if all_done }}">
-                        <span>{{ routine }}</span>
+                        <div>
+                            <span>{{ routine }}</span>
+                            <a href="/delete-routine/{{ routine }}" style="color: #ff4757; font-size: 0.8rem; margin-left: 10px; text-decoration: none; font-weight: normal;" onclick="return confirm('Clear this whole routine container?');">
+                                [Delete Group]
+                            </a>
+                        </div>
                         <span>{{ '✅ Done' if all_done else '⏳ In Progress' }}</span>
                     </summary>
                     

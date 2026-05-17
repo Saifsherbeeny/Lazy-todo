@@ -131,6 +131,41 @@ def inject_routine(routine_type):
         db.session.commit()
         
     return redirect(url_for('home'))
+@app.route('/delete-routine/<string:routine_name>')
+@login_required
+def delete_routine(routine_name):
+    # Find all tasks belonging to this user that match the selected routine name
+    tasks_to_delete = Task.query.filter_by(user_id=current_user.id, routine_name=routine_name).all()
+    
+    for task in tasks_to_delete:
+        db.session.delete(task)
+        
+    db.session.commit()
+    return redirect(url_for('home'))
+
+@app.route('/add-custom-routine', methods=['POST'])
+@login_required
+def add_custom_routine():
+    custom_name = request.form.get('custom_routine_name')
+    raw_tasks = request.form.get('custom_tasks') # Expected to be comma-separated strings
+    
+    if custom_name and raw_tasks:
+        # Split the text by commas and clean up white spaces
+        task_list = [t.strip() for t in raw_tasks.split(',') if t.strip()]
+        
+        for task_content in task_list:
+            new_task = Task(
+                content=task_content,
+                category="Custom",
+                due_date=datetime.now().strftime('%Y-%m-%d'),
+                user_id=current_user.id,
+                routine_name=custom_name # Ties them to the custom header name
+            )
+            db.session.add(new_task)
+            
+        db.session.commit()
+        
+    return redirect(url_for('home'))
 
 @app.route('/')
 @login_required # Anyone trying to sneak in will be bounced to the login page
