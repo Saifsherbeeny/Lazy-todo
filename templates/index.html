@@ -8,8 +8,12 @@
     <style>
         body {
             font-family: sans-serif;
-            background: white;
+            background-color: #f8f9fa; /* Soft premium off-white instead of blinding white */
+            color: #2f3542;
             text-align: center;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Makes dark mode fade in smoothly! */
         }
         .task-card {
             margin: 10px auto;
@@ -17,6 +21,8 @@
             width: 300px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            transition: background-color 0.3s ease;
         }
         .done {
             text-decoration: line-through;
@@ -29,7 +35,25 @@
             border: none;
             padding: 5px 10px;
             border-radius: 5px;
-            /* Dark Mode Color Overrides */
+        }
+        .routine-summary {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 10px;
+            font-size: 1.1rem;
+            color: #2f3542;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .routine-done {
+            color: gray !important;
+            text-decoration: line-through !important;
+        }
+
+        /* ========================================== */
+        /* DARK MODE STYLES (Scoped with body.dark-theme) */
+        /* ========================================== */
         body.dark-theme {
             background-color: #121212 !important;
             color: #ffffff !important;
@@ -57,7 +81,6 @@
         body.dark-theme h4 {
             color: #e0e0e0 !important;
         }
-        }
     </style>
 </head>
 <body>
@@ -69,7 +92,7 @@
         <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
     </div>
 
-    <h2>Lazy To-Do</h2>
+    <h2>OATH : Lazy To-Do</h2>
 
     <form action="/add" method="POST">
         <input type="text" name="new_task" placeholder="What are we avoiding?" required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
