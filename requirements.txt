@@ -35,7 +35,7 @@ pillow==12.2.0
 platformdirs==4.9.4
 pluggy==1.6.0
 proxy_tools==0.1.0
-psycopg2-binary==2.9.12
+psycopg2-binary
 pycparser==3.0
 pydantic==2.12.5
 pydantic_core==2.41.5
