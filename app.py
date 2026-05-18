@@ -389,6 +389,9 @@ def delete(id):
         session['guest_tasks'] = [t for t in session['guest_tasks'] if t['id'] != id]
         session.modified = True
     return redirect('/')
-
+with app.app_context():
+    db.create_all()
+    print("✅ Database tables verified.", flush=True)
+    
 if __name__ == '__main__':
     app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
