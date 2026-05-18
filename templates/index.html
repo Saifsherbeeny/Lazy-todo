@@ -192,6 +192,25 @@
             <button type="button" id="next-slide-btn" class="carousel-btn">Next →</button>
         </div>
     </div>
+    <div style="text-align: center; margin-top: 20px; user-select: none;">
+    <h1 id="brand-logo" style="font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-block; transition: transform 0.3s ease;">
+        Oath<span id="logo-dot" style="color: #2ed573; transition: color 0.3s ease;">.</span>
+    </h1>
+    <p style="font-size: 0.75rem; margin: 2px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
+</div>
+
+<style>
+@keyframes logoWave {
+    0% { transform: scale(1) translateY(0); }
+    25% { transform: scale(1.1, 0.9) translateY(-12px); }
+    50% { transform: scale(0.9, 1.1) translateY(4px); }
+    75% { transform: scale(1.05, 0.95) translateY(-2px); }
+    100% { transform: scale(1) translateY(0); }
+}
+.celebrate-animation {
+    animation: logoWave 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+</style>
     <h1 style="margin-top: 10px; font-size: 1.8rem;">
         Welcome, <span style="color: #1e90ff;">{{ name.split('@')[0] }}</span>
     </h1>
@@ -238,6 +257,14 @@
             </form>
         </details>
     </div>
+    {% if is_guest %}
+<div id="guest-alert" style="background: rgba(255, 165, 0, 0.15); border-left: 4px solid #ffa500; padding: 12px; margin: 15px auto; max-width: 340px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
+    <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #ffa500; text-align: left;">
+        ⚠️ Browsing as guest. <a href="/register" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save progress permanently.
+    </p>
+    <button onclick="document.getElementById('guest-alert').style.display='none'" style="background: none; border: none; color: #ffa500; font-weight: bold; cursor: pointer; font-size: 1rem; padding-left: 10px;">×</button>
+</div>
+{% endif %}
 
     <div id="todo-list">
         
@@ -330,6 +357,11 @@
             });
             window.history.replaceState({}, document.title, "/");
         }
+        const logo = document.getElementById('brand-logo');
+        logo.classList.add('celebrate-animation');
+        setTimeout(() => {
+            logo.classList.remove('celebrate-animation');
+        }, 600);
     </script>
     <script>
         const themeToggleBtn = document.getElementById('theme-toggle');
