@@ -2,45 +2,80 @@
 <html>
 <head>
     <title>OATH : Lazy To-Do - Login</title>
-    <style>body { font-family: sans-serif; text-align: center; margin-top: 50px; }</style>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+
+        .eye {
+            width: 22px; height: 22px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #2ed573;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            transition: border-radius 0.25s ease, height 0.25s ease;
+            vertical-align: middle;
+        }
+        .eye.shy { height: 4px; border-radius: 0 0 22px 22px; border-top: none; }
+        .pupil {
+            position: absolute;
+            width: 9px; height: 9px;
+            background: #2ed573;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .eye.shy .pupil { opacity: 0; }
+        .lids {
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 0; background: #2ed573;
+            transition: height 0.3s ease; z-index: 2;
+        }
+        .eye.typing .lids { height: 6px; }
+    </style>
 </head>
+<body>
+
 <div style="text-align: center; margin-bottom: 25px; user-select: none;">
-    <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-flex; align-items: center; justify-content: center;">
+    <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
         Oath
-        <span id="eye-left" class="eye"><span class="lids"></span><span class="pupil" id="pupil-left"></span></span>
-        <span id="eye-right" class="eye"><span class="lids"></span><span class="pupil" id="pupil-right"></span></span>
+        <span style="display: inline-flex; gap: 10px; align-items: center;">
+            <span class="eye" id="eye-left"><span class="lids"></span><span class="pupil" id="pupil-left"></span></span>
+            <span class="eye" id="eye-right"><span class="lids"></span><span class="pupil" id="pupil-right"></span></span>
+        </span>
     </h1>
     <p style="font-size: 0.8rem; margin: 4px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
 </div>
-<body>
-    <h2>Login to OATH: your Lazy Assistant</h2>
-    <form method="POST">
-        <input type="email" name="email" placeholder="Email" required><br><br>
-        <input type="password" name="password" placeholder="Password" required><br><br>
-        <button type="submit">Sign In</button>
-    </form>
-    <p><br>Don't have an account?</br> <a href="/signup">Sign up here</a></p>
+
+<h2>Login to OATH: your Lazy Assistant</h2>
+<form method="POST">
+    <input type="email" name="email" placeholder="Email" required><br><br>
+    <input type="password" name="password" placeholder="Password" required><br><br>
+    <button type="submit">Sign In</button>
+</form>
+<p><br>Don't have an account? <a href="/signup">Sign up here</a></p>
 
 <script>
-const eyes = [document.querySelector('#eye-left'), document.querySelector('#eye-right')];
-const pupils = [document.querySelector('#pupil-left'), document.querySelector('#pupil-right')];
+const eyes = [document.getElementById('eye-left'), document.getElementById('eye-right')];
+const pupils = [document.getElementById('pupil-left'), document.getElementById('pupil-right')];
 const emailInput = document.querySelector('input[name="email"]');
 const pwInput = document.querySelector('input[name="password"]');
 const MAX_OFFSET = 4.5;
 
 function getCenter(el) {
-  const r = el.getBoundingClientRect();
-  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 function lookAt(target) {
-  const tr = target.getBoundingClientRect();
-  const tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
-  pupils.forEach((p, i) => {
-    const c = getCenter(eyes[i]);
-    const dx = tx - c.x, dy = ty - c.y;
-    const d = Math.sqrt(dx*dx + dy*dy) || 1;
-    p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
-  });
+    const tr = target.getBoundingClientRect();
+    const tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
+    pupils.forEach((p, i) => {
+        const c = getCenter(eyes[i]);
+        const dx = tx - c.x, dy = ty - c.y;
+        const d = Math.sqrt(dx*dx + dy*dy) || 1;
+        p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
+    });
 }
 function goShy() { eyes.forEach(e => { e.classList.add('shy'); e.classList.remove('typing'); }); }
 function unShy() { eyes.forEach(e => e.classList.remove('shy')); }
@@ -56,22 +91,18 @@ pwInput.addEventListener('blur', resetEyes);
 document.addEventListener('mousemove', e => {
     if (document.activeElement === pwInput) return;
     if (document.activeElement === emailInput) { lookAt(emailInput); return; }
-
     pupils.forEach((p, i) => {
         const c = getCenter(eyes[i]);
         const dx = e.clientX - c.x, dy = e.clientY - c.y;
         const d = Math.sqrt(dx*dx + dy*dy) || 1;
-
-        // If mouse is within 30px of the eye center, run away
         if (d < 30) {
-            // Flee: push pupil in the opposite direction of the mouse
             p.style.transform = `translate(calc(-50% + ${-dx/d*MAX_OFFSET}px), calc(-50% + ${-dy/d*MAX_OFFSET}px))`;
         } else {
-            // Normal tracking
             p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
         }
     });
 });
 </script>
+
 </body>
 </html>
