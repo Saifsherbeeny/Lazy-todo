@@ -21,11 +21,16 @@ csrf = CSRFProtect(app)
 Talisman(app, content_security_policy=None)  # None to not block css(bootstrap or tailwind) for now...
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-fallback-local-only-key')
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data_v2.sqlite')
+
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# Forces cookies to only be sent over encrypted HTTPS connections
 app.config['SESSION_COOKIE_SECURE'] = True
-# Prevents JavaScript from reading your cookies (blocks Cross-Site Scripting / XSS tokens)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 db = SQLAlchemy(app)
