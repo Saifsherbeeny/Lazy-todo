@@ -7,21 +7,14 @@ from datetime import datetime
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_talisman import Talisman
-import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
 import os
 import sys
+
 app = Flask(__name__)
 
 # 1. Tell Flask it is behind Railway's secure proxy
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-sentry_sdk.init(
-    dsn="https://9445a4c94a1f3952574ac42ad32e54b8@o4511412319289344.ingest.de.sentry.io/4511412323221584",
-    integrations=[FlaskIntegration()],
-    traces_sample_rate=1.0,
-    send_default_pii=True
-)
 csrf = CSRFProtect(app)
 
 # 2. Tell Talisman to stop forcing HTTPS (Railway handles it for us)
@@ -85,7 +78,6 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
         
-        # 💡 BONUS STARTUP UPGRADE: If they had guest tasks, move them to their new account!
         if 'guest_tasks' in session:
             for g_task in session['guest_tasks']:
                 db_task = Task(
@@ -100,7 +92,7 @@ def signup():
                 )
                 db.session.add(db_task)
             db.session.commit()
-            session.pop('guest_tasks', None) # Clear guest memory
+            session.pop('guest_tasks', None)
         
         login_user(new_user)
         return redirect(url_for('home'))
@@ -133,11 +125,9 @@ def logout():
 
 @app.route('/')
 def home():
-    # Setup initial session arrays for guests if they don't exist
     if 'guest_tasks' not in session:
         session['guest_tasks'] = []
 
-    # 1. Fetch data based on account status
     if current_user.is_authenticated:
         tasks = Task.query.filter_by(user_id=current_user.id).all()
         display_name = current_user.email
@@ -147,7 +137,6 @@ def home():
         display_name = "guest@oath.app"
         is_guest = True
 
-    # 2. Historical Motivation Array
     wisdom_quotes = [
         {"text": "Observation is a passive science, experimentation an active science.", "author": "Claude Bernard"},
         {"text": "An unexamined life is not worth living.", "author": "Socrates"},
@@ -218,7 +207,6 @@ def inject_routine(routine_type):
                 db.session.add(new_task)
             db.session.commit()
         else:
-            # Guest memory allocation
             for task_data in routines[routine_type]:
                 guest_task = {
                     "id": random.randint(100000, 999999),
@@ -371,7 +359,6 @@ def complete_task(task_id):
                     task.status_message = "On time... respect."
             db.session.commit()
     else:
-        # Complete logic for guest tracking
         for task in session['guest_tasks']:
             if task['id'] == task_id:
                 task['is_done'] = True
@@ -403,8 +390,5 @@ def delete(id):
         session.modified = True
     return redirect('/')
 
-#with app.app_context():
-    #db.create_all()
-
 if __name__ == '__main__':
-    app.run(debug=os.environ.get('FLASK_DEBUG')== '1')
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
