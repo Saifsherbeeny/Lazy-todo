@@ -5,9 +5,10 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
-
+import sys
 app = Flask(__name__)
-app.secret_key = 'saifoath1'
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-fallback-local-only-key')
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data_v2.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
