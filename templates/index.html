@@ -223,11 +223,14 @@
         </p>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
-        <button id="theme-toggle" type="button" style="background: #57606f; font-size: 0.85rem; padding: 5px 10px;">
-            🌙 Toggle Theme
-        </button>
+    <button id="theme-toggle" type="button" style="background: #57606f; font-size: 0.85rem; padding: 5px 10px;">🌙 Toggle Theme</button>
+    
+    {% if not is_guest %}
         <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
-    </div>
+    {% else %}
+        <a href="/login" style="color: #2ed573; text-decoration: none; font-weight: bold;">Login</a>
+    {% endif %}
+</div>
 
     <h2>OATH : Lazy To-Do</h2>
 
@@ -260,7 +263,7 @@
     {% if is_guest %}
 <div id="guest-alert" style="background: rgba(255, 165, 0, 0.15); border-left: 4px solid #ffa500; padding: 12px; margin: 15px auto; max-width: 340px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
     <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #ffa500; text-align: left;">
-        ⚠️ Browsing as guest. <a href="/register" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save progress permanently.
+        ⚠️ Browsing as guest. <a href="/signup" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save progress permanently.
     </p>
     <button onclick="document.getElementById('guest-alert').style.display='none'" style="background: none; border: none; color: #ffa500; font-weight: bold; cursor: pointer; font-size: 1rem; padding-left: 10px;">×</button>
 </div>

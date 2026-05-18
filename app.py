@@ -7,7 +7,7 @@ from datetime import datetime
 import os
 
 app = Flask(__name__)
-app.secret_key = 'lazy_secret_key_123'
+app.secret_key = 'saifoath1'
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data_v2.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

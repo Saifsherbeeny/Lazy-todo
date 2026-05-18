@@ -4,13 +4,55 @@
     <title>Lazy To-Do - Sign Up</title>
     <style>body { font-family: sans-serif; text-align: center; margin-top: 50px; }</style>
 </head>
+<div style="text-align: center; margin-bottom: 25px; user-select: none;">
+    <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-flex; align-items: center; justify-content: center;">
+        Oath
+        <span id="logo-eyes" style="display: inline-flex; gap: 4px; margin-left: 2px; transition: transform 0.2s ease;">
+            <span class="eye-pupil" style="width: 10px; height: 10px; background: #2ed573; border-radius: 50%; display: inline-block; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></span>
+            <span class="eye-pupil" style="width: 10px; height: 10px; background: #2ed573; border-radius: 50%; display: inline-block; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></span>
+        </span>
+    </h1>
+    <p style="font-size: 0.8rem; margin: 4px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
+</div>
 <body>
-    <h2>Create a Lazy Account</h2>
+    <h2>Create an OATH Account</h2>
     <form method="POST">
         <input type="email" name="email" placeholder="Email" required><br><br>
         <input type="password" name="password" placeholder="Password" required><br><br>
         <button type="submit">Register</button>
     </form>
     <p>Already have an account? <a href="/login">Login here</a></p>
+    <script>
+    const emailInput = document.querySelector('input[name="email"]');
+    const passwordInput = document.querySelector('input[name="password"]');
+    const pupils = document.querySelectorAll('.eye-pupil');
+    const eyesContainer = document.getElementById('logo-eyes');
+
+    // 1. When user clicks/types in Email: Look down at the input box
+    emailInput.addEventListener('focus', () => {
+        pupils.forEach(pupil => {
+            pupil.style.transform = 'translate(-4px, 5px)'; // Shift left and down
+        });
+        eyesContainer.style.transform = 'rotate(-5deg)';
+    });
+
+    // 2. When user clicks in Password: Look away suspiciously!
+    passwordInput.addEventListener('focus', () => {
+        pupils.forEach(pupil => {
+            pupil.style.transform = 'translate(12px, -8px) scale(0.7)'; // Shift completely away and shrink
+        });
+        eyesContainer.style.transform = 'rotate(15deg)';
+    });
+
+    // 3. Reset when user clicks completely out of the inputs
+    [emailInput, passwordInput].forEach(input => {
+        input.addEventListener('blur', () => {
+            pupils.forEach(pupil => {
+                pupil.style.transform = 'translate(0, 0) scale(1)'; // Snap back to center
+            });
+            eyesContainer.style.transform = 'rotate(0deg)';
+        });
+    });
+</script>
 </body>
 </html>
