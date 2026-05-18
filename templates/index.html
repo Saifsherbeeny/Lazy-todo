@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OATH : Lazy To-Do</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script>
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark-theme');
+    }
+</script>
     <style>
         body {
             font-family: sans-serif;
@@ -54,33 +59,34 @@
         /* ========================================== */
         /* DARK MODE STYLES (Scoped with body.dark-theme) */
         /* ========================================== */
-        body.dark-theme {
+        html.dark-theme {
             background-color: #121212 !important;
             color: #ffffff !important;
         }
-        body.dark-theme .task-card, 
-        body.dark-theme details {
+        html.dark-theme .task-card, 
+        html.dark-theme details {
             background-color: #1e1e1e !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
         }
-        body.dark-theme .routine-summary {
+        html.dark-theme .routine-summary {
             color: #e0e0e0 !important;
         }
-        body.dark-theme h2, body.dark-theme h3, body.dark-theme p {
+        html.dark-theme h2, html.dark-theme h3, html.dark-theme p {
             color: #ffffff !important;
         }
-        body.dark-theme input, body.dark-theme textarea {
+        html.dark-theme input, html.dark-theme textarea {
             background-color: #2d2d2d !important;
             color: white !important;
             border: 1px solid #444 !important;
         }
-        body.dark-theme div[style*="background: #f8f9fa"] {
+        html.dark-theme div[style*="background: #f8f9fa"] {
             background-color: #1e1e1e !important;
             border: 1px solid #333 !important;
         }
-        body.dark-theme h4 {
+        html.dark-theme h4 {
             color: #e0e0e0 !important;
         }
+    
         /* ========================================== */
         /* ONBOARDING CAROUSEL SLIDER STYLE ENGINE   */
         /* ========================================== */
