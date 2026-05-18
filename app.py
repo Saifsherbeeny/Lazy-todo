@@ -12,6 +12,13 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'local-fallback-key')
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.sqlite'
 app.config['SESSION_COOKIE_SECURE'] = False  # temporarily off
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
