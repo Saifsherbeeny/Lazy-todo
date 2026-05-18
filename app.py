@@ -5,12 +5,17 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_talisman import Talisman
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 import os
 import sys
 app = Flask(__name__)
+
+# 1. Tell Flask it is behind Railway's secure proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 sentry_sdk.init(
     dsn="https://9445a4c94a1f3952574ac42ad32e54b8@o4511412319289344.ingest.de.sentry.io/4511412323221584",
     integrations=[FlaskIntegration()],
@@ -18,7 +23,10 @@ sentry_sdk.init(
     send_default_pii=True
 )
 csrf = CSRFProtect(app)
-Talisman(app, content_security_policy=None)  # None to not block css(bootstrap or tailwind) for now...
+
+# 2. Tell Talisman to stop forcing HTTPS (Railway handles it for us)
+Talisman(app, content_security_policy=None, force_https=False) 
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-fallback-local-only-key')
 basedir = os.path.abspath(os.path.dirname(__file__))
 
