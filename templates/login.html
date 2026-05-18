@@ -54,14 +54,23 @@ pwInput.addEventListener('focus', goShy);
 pwInput.addEventListener('blur', resetEyes);
 
 document.addEventListener('mousemove', e => {
-  if (document.activeElement === pwInput) return;
-  if (document.activeElement === emailInput) { lookAt(emailInput); return; }
-  pupils.forEach((p, i) => {
-    const c = getCenter(eyes[i]);
-    const dx = e.clientX - c.x, dy = e.clientY - c.y;
-    const d = Math.sqrt(dx*dx + dy*dy) || 1;
-    p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
-  });
+    if (document.activeElement === pwInput) return;
+    if (document.activeElement === emailInput) { lookAt(emailInput); return; }
+
+    pupils.forEach((p, i) => {
+        const c = getCenter(eyes[i]);
+        const dx = e.clientX - c.x, dy = e.clientY - c.y;
+        const d = Math.sqrt(dx*dx + dy*dy) || 1;
+
+        // If mouse is within 30px of the eye center, run away
+        if (d < 30) {
+            // Flee: push pupil in the opposite direction of the mouse
+            p.style.transform = `translate(calc(-50% + ${-dx/d*MAX_OFFSET}px), calc(-50% + ${-dy/d*MAX_OFFSET}px))`;
+        } else {
+            // Normal tracking
+            p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
+        }
+    });
 });
 </script>
 </body>
