@@ -4,36 +4,23 @@ import random
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask_talisman import Talisman
 import os
 import sys
 
 app = Flask(__name__)
-
-# 1. Tell Flask it is behind Railway's secure proxy
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-csrf = CSRFProtect(app)
-
-# 2. Tell Talisman to stop forcing HTTPS (Railway handles it for us)
-Talisman(app, content_security_policy=None, force_https=False) 
-
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-fallback-local-only-key')
-basedir = os.path.abspath(os.path.dirname(__file__))
-
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.sqlite'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'local-fallback-key')
+app.config['SESSION_COOKIE_SECURE'] = False  # temporarily off
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
 
+# temporarily remove CSRFProtect and Talisman entirely to avoid testing headaches, will re-add before production deployment
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
