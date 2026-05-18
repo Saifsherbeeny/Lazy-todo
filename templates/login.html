@@ -7,10 +7,8 @@
 <div style="text-align: center; margin-bottom: 25px; user-select: none;">
     <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-flex; align-items: center; justify-content: center;">
         Oath
-        <span id="logo-eyes" style="display: inline-flex; gap: 4px; margin-left: 2px; transition: transform 0.2s ease;">
-            <span class="eye-pupil" style="width: 10px; height: 10px; background: #2ed573; border-radius: 50%; display: inline-block; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></span>
-            <span class="eye-pupil" style="width: 10px; height: 10px; background: #2ed573; border-radius: 50%; display: inline-block; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></span>
-        </span>
+        <span id="eye-left" class="eye"><span class="lids"></span><span class="pupil" id="pupil-left"></span></span>
+        <span id="eye-right" class="eye"><span class="lids"></span><span class="pupil" id="pupil-right"></span></span>
     </h1>
     <p style="font-size: 0.8rem; margin: 4px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
 </div>
@@ -23,37 +21,48 @@
     </form>
     <p><br>Don't have an account?</br> <a href="/signup">Sign up here</a></p>
 
-    <script>
-    const emailInput = document.querySelector('input[name="email"]');
-    const passwordInput = document.querySelector('input[name="password"]');
-    const pupils = document.querySelectorAll('.eye-pupil');
-    const eyesContainer = document.getElementById('logo-eyes');
+<script>
+const eyes = [document.querySelector('#eye-left'), document.querySelector('#eye-right')];
+const pupils = [document.querySelector('#pupil-left'), document.querySelector('#pupil-right')];
+const emailInput = document.querySelector('input[name="email"]');
+const pwInput = document.querySelector('input[name="password"]');
+const MAX_OFFSET = 4.5;
 
-    // 1. When user clicks/types in Email: Look down at the input box
-    emailInput.addEventListener('focus', () => {
-        pupils.forEach(pupil => {
-            pupil.style.transform = 'translate(-4px, 5px)'; // Shift left and down
-        });
-        eyesContainer.style.transform = 'rotate(-5deg)';
-    });
+function getCenter(el) {
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+function lookAt(target) {
+  const tr = target.getBoundingClientRect();
+  const tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
+  pupils.forEach((p, i) => {
+    const c = getCenter(eyes[i]);
+    const dx = tx - c.x, dy = ty - c.y;
+    const d = Math.sqrt(dx*dx + dy*dy) || 1;
+    p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
+  });
+}
+function goShy() { eyes.forEach(e => { e.classList.add('shy'); e.classList.remove('typing'); }); }
+function unShy() { eyes.forEach(e => e.classList.remove('shy')); }
+function setTyping(on) { eyes.forEach(e => on ? e.classList.add('typing') : e.classList.remove('typing')); }
+function resetEyes() { unShy(); pupils.forEach(p => p.style.transform = 'translate(-50%,-50%)'); setTyping(false); }
 
-    // 2. When user clicks in Password: Look away suspiciously!
-    passwordInput.addEventListener('focus', () => {
-        pupils.forEach(pupil => {
-            pupil.style.transform = 'translate(12px, -8px) scale(0.7)'; // Shift completely away and shrink
-        });
-        eyesContainer.style.transform = 'rotate(15deg)';
-    });
+emailInput.addEventListener('focus', () => { unShy(); lookAt(emailInput); });
+emailInput.addEventListener('input', () => setTyping(true));
+emailInput.addEventListener('blur', () => setTyping(false));
+pwInput.addEventListener('focus', goShy);
+pwInput.addEventListener('blur', resetEyes);
 
-    // 3. Reset when user clicks completely out of the inputs
-    [emailInput, passwordInput].forEach(input => {
-        input.addEventListener('blur', () => {
-            pupils.forEach(pupil => {
-                pupil.style.transform = 'translate(0, 0) scale(1)'; // Snap back to center
-            });
-            eyesContainer.style.transform = 'rotate(0deg)';
-        });
-    });
+document.addEventListener('mousemove', e => {
+  if (document.activeElement === pwInput) return;
+  if (document.activeElement === emailInput) { lookAt(emailInput); return; }
+  pupils.forEach((p, i) => {
+    const c = getCenter(eyes[i]);
+    const dx = e.clientX - c.x, dy = e.clientY - c.y;
+    const d = Math.sqrt(dx*dx + dy*dy) || 1;
+    p.style.transform = `translate(calc(-50% + ${dx/d*MAX_OFFSET}px), calc(-50% + ${dy/d*MAX_OFFSET}px))`;
+  });
+});
 </script>
 </body>
 </html>
