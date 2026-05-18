@@ -4,14 +4,29 @@ import random
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 import os
 import sys
 app = Flask(__name__)
-
+sentry_sdk.init(
+    dsn="https://9445a4c94a1f3952574ac42ad32e54b8@o4511412319289344.ingest.de.sentry.io/4511412323221584",
+    integrations=[FlaskIntegration()],
+    traces_sample_rate=1.0,
+    send_default_pii=True
+)
+csrf = CSRFProtect(app)
+Talisman(app, content_security_policy=None)  # None to not block css(bootstrap or tailwind) for now...
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-fallback-local-only-key')
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data_v2.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Forces cookies to only be sent over encrypted HTTPS connections
+app.config['SESSION_COOKIE_SECURE'] = True
+# Prevents JavaScript from reading your cookies (blocks Cross-Site Scripting / XSS tokens)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -379,4 +394,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG')== '1')
