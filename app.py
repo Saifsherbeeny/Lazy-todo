@@ -62,6 +62,10 @@ def load_user(user_id):
 
 # --- AUTHENTICATION ROUTES ---
 
+@app.route('/test')
+def test():
+    return "app is alive", 200
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -392,6 +396,6 @@ def delete(id):
 with app.app_context():
     db.create_all()
     print("✅ Database tables verified.", flush=True)
-    
+
 if __name__ == '__main__':
     app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
