@@ -402,6 +402,41 @@
 
     </div>
 
+    <!-- ACCOUNT SECTION (logged-in users only) -->
+    {% if not is_guest %}
+    <div style="margin: 30px auto; max-width: 340px; padding: 15px; border-radius: 10px; border: 1px solid #e9ecef; background: #f8f9fa; text-align: left;">
+        <h4 style="margin: 0 0 12px 0; color: #495057;">⚙️ My Account</h4>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <a href="/export-data" style="text-decoration: none;">
+                <button type="button" style="background: #1e90ff; width: 100%; font-size: 0.85rem; padding: 7px;">
+                    📥 Export My Data (CSV)
+                </button>
+            </a>
+            <button type="button"
+                    onclick="document.getElementById('delete-account-confirm').style.display='block'; this.style.display='none';"
+                    style="background: #ff4757; width: 100%; font-size: 0.85rem; padding: 7px;">
+                🗑️ Delete My Account
+            </button>
+            <div id="delete-account-confirm" style="display: none; background: rgba(255,71,87,0.08); border: 1px solid #ff4757; border-radius: 8px; padding: 12px; font-size: 0.85rem;">
+                <p style="margin: 0 0 10px 0; color: #ff4757; font-weight: bold;">⚠️ This will permanently delete your account and all your tasks. There is no undo.</p>
+                <form action="/delete-account" method="POST" style="display: flex; gap: 8px;">
+                    <button type="submit" style="background: #ff4757; flex: 1; padding: 7px; font-size: 0.85rem;">Yes, delete everything</button>
+                    <button type="button"
+                            onclick="document.getElementById('delete-account-confirm').style.display='none'; document.querySelector('[onclick*=delete-account-confirm]').style.display='';"
+                            style="background: #57606f; flex: 1; padding: 7px; font-size: 0.85rem;">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FOOTER -->
+    <footer style="margin: 30px auto 20px; font-size: 0.75rem; color: #aaa;">
+        <a href="/privacy" style="color: #aaa; text-decoration: underline;">Privacy Policy</a>
+        &nbsp;·&nbsp;
+        © 2026 OATH
+    </footer>
+
     <!-- SCRIPTS -->
     <script>
         /* Confetti on task completion */

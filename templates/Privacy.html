@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OATH – Privacy Policy</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f8f9fa;
+            color: #2f3542;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+            line-height: 1.7;
+        }
+        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+        h2 { font-size: 1.1rem; font-weight: 700; margin-top: 36px; border-bottom: 1px solid #e9ecef; padding-bottom: 6px; }
+        p, li { font-size: 0.95rem; color: #444; }
+        ul { padding-left: 20px; }
+        .subtitle { color: #aaa; font-size: 0.85rem; margin-top: 0; }
+        .highlight {
+            background: rgba(46, 213, 115, 0.1);
+            border-left: 4px solid #2ed573;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+        a { color: #1e90ff; }
+        footer { margin-top: 60px; font-size: 0.8rem; color: #aaa; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <a href="/" style="font-size: 0.85rem; color: #aaa; text-decoration: none;">← Back to OATH</a>
+
+    <h1 style="margin-top: 20px;">Privacy Policy</h1>
+    <p class="subtitle">Last updated: May 2026</p>
+
+    <div class="highlight">
+        The short version: we collect only what's necessary to run the app. We don't sell your data. We don't share it with advertisers. You can delete everything at any time.
+    </div>
+
+    <h2>1. Who we are</h2>
+    <p>
+        OATH (oathapp.tech) is an independent to-do app. For any privacy questions, contact us at:
+        <strong>salsherbeeny@gmail.com</strong>
+        <!-- TODO: replace with a real contact email before launch -->
+    </p>
+
+    <h2>2. What data we collect</h2>
+    <ul>
+        <li><strong>Email address</strong> — used to identify your account.</li>
+        <li><strong>Password</strong> — stored as a one-way hash (scrypt). We never store or see your plain-text password.</li>
+        <li><strong>Tasks and routines</strong> — the content you add to the app, including due dates, categories, and completion status.</li>
+        <li><strong>Browser preferences</strong> — dark mode and onboarding state are stored locally in your browser (localStorage) and never sent to our servers.</li>
+    </ul>
+    <p>We do not collect your name, phone number, payment information, location, or any other personal data.</p>
+
+    <h2>3. Why we collect it</h2>
+    <ul>
+        <li>Your email and password allow you to log in and keep your tasks across devices.</li>
+        <li>Your tasks are stored so the app works. That's it.</li>
+    </ul>
+    <p>Legal basis under GDPR: <strong>contractual necessity</strong> (Article 6(1)(b)) — we need this data to provide the service you signed up for.</p>
+
+    <h2>4. Where your data is stored</h2>
+    <p>
+        Your data is stored in a PostgreSQL database hosted on <strong>[your hosting provider, e.g. Render / Railway]</strong>,
+        located in <strong>[server region, e.g. EU West / Frankfurt]</strong>.
+        <!-- TODO: confirm and fill in your actual host and region before launch -->
+    </p>
+    <p>If your host stores data outside the EU, ensure they are covered by an adequacy decision or Standard Contractual Clauses (SCCs). Check your hosting provider's data processing agreement.</p>
+
+    <h2>5. How long we keep your data</h2>
+    <p>Your data is kept for as long as your account exists. If you delete your account, all your data (email, password hash, and tasks) is permanently and immediately deleted from our database. We have no backups that would retain your data after deletion.</p>
+    <!-- TODO: verify this is true with your hosting provider's backup policy -->
+
+    <h2>6. Your rights (GDPR)</h2>
+    <p>As a user, you have the right to:</p>
+    <ul>
+        <li><strong>Access</strong> your data — use the "Export My Data" button in your account section to download everything we hold about you as a CSV file.</li>
+        <li><strong>Delete</strong> your data — use the "Delete My Account" button. This is immediate and permanent.</li>
+        <li><strong>Rectification</strong> — if you need to correct your email address, contact us directly.</li>
+        <li><strong>Portability</strong> — your exported CSV satisfies this right.</li>
+        <li><strong>Object or restrict processing</strong> — contact us at the email above.</li>
+    </ul>
+    <p>You also have the right to lodge a complaint with your national data protection authority. In France, that is the <a href="https://www.cnil.fr" target="_blank" rel="noopener">CNIL</a>.</p>
+
+    <h2>7. Cookies and local storage</h2>
+    <p>We use:</p>
+    <ul>
+        <li><strong>Session cookie</strong> — keeps you logged in. Strictly necessary, no consent required.</li>
+        <li><strong>localStorage</strong> — stores your theme preference (dark/light) and whether you've seen the onboarding. This never leaves your browser.</li>
+    </ul>
+    <p>We do not use advertising cookies, tracking pixels, or third-party analytics.</p>
+
+    <h2>8. Third parties</h2>
+    <p>We do not sell, rent, or share your personal data with any third parties. The only external service involved is our hosting provider, who processes data on our behalf under their own data processing agreement.</p>
+
+    <h2>9. Changes to this policy</h2>
+    <p>If we make significant changes to how we handle your data, we will update the date at the top of this page. For major changes, we will notify you via email.</p>
+
+    <h2>10. Contact</h2>
+    <p>For any privacy-related questions or requests: <strong>[your-email@domain.com]</strong></p>
+
+    <footer>
+        <a href="/" style="color: #aaa;">← Back to OATH</a>
+    </footer>
+
+</body>
+</html>

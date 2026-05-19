@@ -395,6 +395,46 @@ def delete(id):
     return redirect(url_for('home'))
 
 
+# --- ACCOUNT & PRIVACY ROUTES ---
+
+@app.route('/delete-account', methods=['POST'])
+@login_required
+def delete_account():
+    user = db.session.get(User, current_user.id)
+    Task.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    db.session.commit()
+    logout_user()
+    return redirect(url_for('login'))
+
+
+@app.route('/export-data')
+@login_required
+def export_data():
+    import csv
+    import io
+    from flask import Response
+
+    tasks = Task.query.filter_by(user_id=current_user.id).all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['content', 'category', 'due_date', 'due_time', 'is_done', 'status_message', 'routine_name'])
+    for t in tasks:
+        writer.writerow([t.content, t.category, t.due_date, t.due_time, t.is_done, t.status_message, t.routine_name])
+    output.seek(0)
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename=oath-data-{current_user.email}.csv'}
+    )
+
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 with app.app_context():
     db.create_all()
     print("✅ Database tables verified.", flush=True)
