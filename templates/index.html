@@ -6,20 +6,22 @@
     <title>OATH : Lazy To-Do</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
-    if (localStorage.getItem('theme') === 'dark') {
-        document.documentElement.classList.add('dark-theme');
-    }
-</script>
+        /* Apply saved theme before render to avoid flash */
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
     <style>
         body {
             font-family: sans-serif;
-            background-color: #f8f9fa; /* Soft premium off-white instead of blinding white */
+            background-color: #f8f9fa;
             color: #2f3542;
             text-align: center;
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s ease, color 0.3s ease; /* Makes dark mode fade in smoothly! */
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
         .task-card {
             margin: 10px auto;
             padding: 20px;
@@ -29,10 +31,12 @@
             background-color: white;
             transition: background-color 0.3s ease;
         }
+
         .done {
             text-decoration: line-through;
             color: gray;
         }
+
         button {
             cursor: pointer;
             background: #ff4757;
@@ -41,6 +45,7 @@
             padding: 5px 10px;
             border-radius: 5px;
         }
+
         .routine-summary {
             cursor: pointer;
             font-weight: bold;
@@ -51,19 +56,62 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .routine-done {
             color: gray !important;
             text-decoration: line-through !important;
         }
 
-        /* ========================================== */
-        /* DARK MODE STYLES (Scoped with body.dark-theme) */
-        /* ========================================== */
-        html.dark-theme {
-            background-color: #121212 !important;
-            color: #ffffff !important;
+        /* Animated eyes */
+        .eye {
+            width: 22px; height: 22px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #2ed573;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            transition: border-radius 0.25s ease, height 0.25s ease;
+            vertical-align: middle;
         }
-        html.dark-theme .task-card, 
+        .eye.shy { height: 4px; border-radius: 0 0 22px 22px; border-top: none; }
+        .pupil {
+            position: absolute;
+            width: 9px; height: 9px;
+            background: #2ed573;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .eye.shy .pupil { opacity: 0; }
+        .lids {
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 0; background: #2ed573;
+            transition: height 0.3s ease; z-index: 2;
+        }
+        .eye.typing .lids { height: 6px; }
+
+        /* Logo bounce animation */
+        @keyframes logoWave {
+            0%   { transform: scale(1) translateY(0); }
+            25%  { transform: scale(1.1, 0.9) translateY(-12px); }
+            50%  { transform: scale(0.9, 1.1) translateY(4px); }
+            75%  { transform: scale(1.05, 0.95) translateY(-2px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        .celebrate-animation {
+            animation: logoWave 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* ================================ */
+        /* DARK MODE                        */
+        /* ================================ */
+        html.dark-theme body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        html.dark-theme .task-card,
         html.dark-theme details {
             background-color: #1e1e1e !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
@@ -74,7 +122,9 @@
         html.dark-theme h2, html.dark-theme h3, html.dark-theme p {
             color: #ffffff !important;
         }
-        html.dark-theme input, html.dark-theme textarea {
+        html.dark-theme input,
+        html.dark-theme select,
+        html.dark-theme textarea {
             background-color: #2d2d2d !important;
             color: white !important;
             border: 1px solid #444 !important;
@@ -86,16 +136,14 @@
         html.dark-theme h4 {
             color: #e0e0e0 !important;
         }
-    
-        /* ========================================== */
-        /* ONBOARDING CAROUSEL SLIDER STYLE ENGINE   */
-        /* ========================================== */
+
+        /* ================================ */
+        /* ONBOARDING CAROUSEL              */
+        /* ================================ */
         #onboarding-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background-color: #121212;
             z-index: 9999;
             display: flex;
@@ -115,13 +163,8 @@
             display: none;
             animation: fadeIn 0.4s ease-in-out;
         }
-        .slide.active {
-            display: block;
-        }
-        .slide-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
+        .slide.active { display: block; }
+        .slide-icon { font-size: 4rem; margin-bottom: 20px; }
         .slide h2 {
             font-size: 1.8rem;
             margin-bottom: 15px;
@@ -140,15 +183,12 @@
             margin-bottom: 30px;
         }
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 10px; height: 10px;
             border-radius: 50%;
             background-color: #444;
             transition: background-color 0.3s;
         }
-        .dot.active {
-            background-color: #1e90ff;
-        }
+        .dot.active { background-color: #1e90ff; }
         .carousel-btn {
             background: #1e90ff;
             color: white;
@@ -163,84 +203,60 @@
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        .eye {
-  width: 22px; height: 22px;
-  background: white;
-  border-radius: 50%;
-  border: 2px solid #2ed573;
-  position: relative;
-  overflow: hidden;
-  display: inline-block;
-  transition: border-radius 0.25s ease, height 0.25s ease;
-  vertical-align: middle;
-}
-.eye.shy { height: 4px; border-radius: 0 0 22px 22px; border-top: none; }
-.pupil {
-  position: absolute;
-  width: 9px; height: 9px;
-  background: #2ed573;
-  border-radius: 50%;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.eye.shy .pupil { opacity: 0; }
-.lids { position: absolute; top: 0; left: 0; right: 0; height: 0; background: #2ed573; transition: height 0.3s ease; z-index: 2; }
-.eye.typing .lids { height: 6px; }
     </style>
 </head>
 <body>
+
+    <!-- ONBOARDING OVERLAY -->
     <div id="onboarding-overlay">
         <div class="carousel-container">
-            
             <div class="slide active">
                 <div class="slide-icon">🦥</div>
                 <h2>Welcome to OATH: Lazy To-Do</h2>
                 <p>The productivity app built specifically for people who hate standard, stressful productivity apps. Let's make avoiding things smart.</p>
             </div>
-
             <div class="slide">
                 <div class="slide-icon">🛡️</div>
                 <h2>The OATH Concept</h2>
-                <p>We don't do "tasks". We do mini-commitments. When you check off an item, you aren't just crossing a box—you are fulfilling an OATH to yourself.</p>
+                <p>We don't do "tasks". We do mini-commitments. When you check off an item, you aren't just crossing a box — you are fulfilling an OATH to yourself.</p>
             </div>
-
             <div class="slide">
                 <div class="slide-icon">⚡</div>
                 <h2>Foldable Habits</h2>
-                <p>Inject complete routines (Morning, Night, Travel) into your feed with one tap. They bundle up neatly in folders to keep your screen clean until you are ready.</p>
+                <p>Inject complete routines (Morning, Night, Travel) into your feed with one tap. They bundle up neatly in folders to keep your screen clean until you're ready.</p>
             </div>
-
             <div class="carousel-dots">
                 <div class="dot active"></div>
                 <div class="dot"></div>
                 <div class="dot"></div>
             </div>
-
             <button type="button" id="next-slide-btn" class="carousel-btn">Next →</button>
         </div>
     </div>
-    <div style="text-align: center; margin-top: 20px; user-select: none;">
-    <h1 id="brand-logo" style="font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-block; transition: transform 0.3s ease;">
-        Oath<span id="logo-dot" style="color: #2ed573; transition: color 0.3s ease;">.</span>
-    </h1>
-    <p style="font-size: 0.75rem; margin: 2px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
-</div>
 
-<style>
-@keyframes logoWave {
-    0% { transform: scale(1) translateY(0); }
-    25% { transform: scale(1.1, 0.9) translateY(-12px); }
-    50% { transform: scale(0.9, 1.1) translateY(4px); }
-    75% { transform: scale(1.05, 0.95) translateY(-2px); }
-    100% { transform: scale(1) translateY(0); }
-}
-.celebrate-animation {
-    animation: logoWave 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-}
-</style>
+    <!-- HEADER -->
+    <div style="text-align: center; margin-top: 20px; user-select: none;">
+        <h1 id="brand-logo" style="font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-block; transition: transform 0.3s ease;">
+            Oath<span id="logo-dot" style="color: #2ed573; transition: color 0.3s ease;">.</span>
+        </h1>
+        <p style="font-size: 0.75rem; margin: 2px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
+    </div>
+
+    <!-- TOP BAR -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+        <button id="theme-toggle" type="button" style="background: #57606f; font-size: 0.85rem; padding: 5px 10px;">
+            {% if request.cookies.get('theme') == 'dark' %}☀️ Light Mode{% else %}🌙 Dark Mode{% endif %}
+        </button>
+        {% if not is_guest %}
+            <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
+        {% else %}
+            <a href="/login" style="color: #2ed573; text-decoration: none; font-weight: bold;">Login</a>
+        {% endif %}
+    </div>
+
+    <!-- WELCOME + WISDOM -->
     <h1 style="margin-top: 10px; font-size: 1.8rem;">
         Welcome, <span style="color: #1e90ff;">{{ name.split('@')[0] }}</span>
     </h1>
@@ -252,60 +268,71 @@
             — {{ wisdom.author }}
         </p>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
-    <button id="theme-toggle" type="button" style="background: #57606f; font-size: 0.85rem; padding: 5px 10px;">🌙 Toggle Theme</button>
-    
-    {% if not is_guest %}
-        <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
-    {% else %}
-        <a href="/login" style="color: #2ed573; text-decoration: none; font-weight: bold;">Login</a>
+
+    <!-- GUEST ALERT -->
+    {% if is_guest %}
+    <div id="guest-alert" style="background: rgba(255, 165, 0, 0.15); border-left: 4px solid #ffa500; padding: 12px; margin: 15px auto; max-width: 340px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
+        <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #ffa500; text-align: left;">
+            ⚠️ Browsing as guest. <a href="/signup" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save progress permanently.
+        </p>
+        <button onclick="document.getElementById('guest-alert').style.display='none'" style="background: none; border: none; color: #ffa500; font-weight: bold; cursor: pointer; font-size: 1rem; padding-left: 10px;">×</button>
+    </div>
     {% endif %}
-</div>
 
+    <!-- ADD TASK FORM -->
     <h2>OATH : Lazy To-Do</h2>
-
-    <form action="/add" method="POST">
-        <input type="text" name="new_task" placeholder="What are we avoiding?" required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-        <input type="date" name="due_date" required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-        <button type="submit">Add Task</button>
+    <form action="/add" method="POST" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 10px;">
+        <input type="text" name="new_task" placeholder="What are we avoiding?" required
+               style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 280px;">
+        <div style="display: flex; gap: 8px;">
+            <input type="date" name="due_date"
+                   style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+            <input type="time" name="due_time"
+                   style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+        </div>
+        <select name="category" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 300px;">
+            <option value="General">📋 General</option>
+            <option value="Health">💪 Health</option>
+            <option value="Mind">🧠 Mind</option>
+            <option value="Work">💼 Work</option>
+            <option value="Uni">📚 Uni</option>
+            <option value="Travel">✈️ Travel</option>
+        </select>
+        <button type="submit" style="background: #2f3542; width: 300px; padding: 8px;">Add Task</button>
     </form>
 
+    <!-- FAST HABITS INJECTION -->
     <div style="margin: 20px auto; max-width: 340px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e9ecef;">
-        <h4 style="margin-top:0; color:#495057;">⚡ Fast Habits Injection</h4>
+        <h4 style="margin-top: 0; color: #495057;">⚡ Fast Habits Injection</h4>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <a href="/inject-routine/morning"><button type="button" style="background: #1e90ff; width:100%;">+ Add Morning Routine</button></a>
-            <a href="/inject-routine/night"><button type="button" style="background: #57606f; width:100%;">+ Add Night Routine</button></a>
-            <a href="/inject-routine/travel"><button type="button" style="background: #ffa500; width:100%;">+ Add Travel Prep</button></a>
+            <a href="/inject-routine/morning"><button type="button" style="background: #1e90ff; width: 100%;">+ Add Morning Routine</button></a>
+            <a href="/inject-routine/night"><button type="button" style="background: #57606f; width: 100%;">+ Add Night Routine</button></a>
+            <a href="/inject-routine/travel"><button type="button" style="background: #ffa500; width: 100%;">+ Add Travel Prep</button></a>
         </div>
         <hr style="border: 0; border-top: 1px solid #e9ecef; margin: 15px 0;">
-        
         <details style="text-align: left;">
             <summary style="cursor: pointer; font-weight: bold; font-size: 0.9rem; color: #1e90ff;">
                 🛠️ Build a Custom Task Group
             </summary>
             <form action="/add-custom-routine" method="POST" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-                <input type="text" name="custom_routine_name" placeholder="Group Name (e.g., Gym Routine)" required style="padding: 6px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem;">
-                <textarea name="custom_tasks" placeholder="Tasks split by commas (e.g., Bench press, Squats, Cardio)" required style="padding: 6px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem; font-family: sans-serif; resize: vertical; min-height: 50px;"></textarea>
+                <input type="text" name="custom_routine_name" placeholder="Group Name (e.g., Gym Routine)" required
+                       style="padding: 6px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem;">
+                <textarea name="custom_tasks" placeholder="Tasks split by commas (e.g., Bench press, Squats, Cardio)" required
+                          style="padding: 6px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.85rem; font-family: sans-serif; resize: vertical; min-height: 50px;"></textarea>
                 <button type="submit" style="background: #2ed573; font-size: 0.85rem; padding: 6px;">Create Group</button>
             </form>
         </details>
     </div>
-    {% if is_guest %}
-<div id="guest-alert" style="background: rgba(255, 165, 0, 0.15); border-left: 4px solid #ffa500; padding: 12px; margin: 15px auto; max-width: 340px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
-    <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #ffa500; text-align: left;">
-        ⚠️ Browsing as guest. <a href="/signup" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save progress permanently.
-    </p>
-    <button onclick="document.getElementById('guest-alert').style.display='none'" style="background: none; border: none; color: #ffa500; font-weight: bold; cursor: pointer; font-size: 1rem; padding-left: 10px;">×</button>
-</div>
-{% endif %}
 
+    <!-- TASK LIST -->
     <div id="todo-list">
-        
+
+        <!-- Standalone tasks (no routine) -->
         {% for t in tasks if not t.routine_name %}
         <div class="task-card">
             <h3 class="{{ 'done' if t.is_done }}">{{ t.content }}</h3>
-            <p>Due: {{ t.due_date }}</p>
-            
+            <p>Due: {{ t.due_date }}{% if t.due_time %} at {{ t.due_time }}{% endif %}</p>
+            <p style="font-size: 0.8rem; color: #888;">{{ t.category }}</p>
             {% if not t.is_done %}
                 <a href="/complete/{{ t.id }}" onclick="confetti()">
                     <button type="button">OATH: I did it.</button>
@@ -319,40 +346,32 @@
         </div>
         {% endfor %}
 
+        <!-- Routine groups -->
         {% for routine in tasks|map(attribute='routine_name')|unique %}
             {% if routine %}
-                
-                {% set routine_tasks = tasks|selectattr('routine_name', 'equalto', routine)|list %}
-                {% set total_count = routine_tasks|length %}
-                
+                {% set routine_tasks   = tasks|selectattr('routine_name', 'equalto', routine)|list %}
+                {% set total_count     = routine_tasks|length %}
                 {% set remaining_items = namespace(count=0) %}
                 {% for t in routine_tasks %}
-                    {% if not t.is_done %}
-                        {% set remaining_items.count = remaining_items.count + 1 %}
-                    {% endif %}
+                    {% if not t.is_done %}{% set remaining_items.count = remaining_items.count + 1 %}{% endif %}
                 {% endfor %}
+                {% set all_done = (total_count > 0 and remaining_items.count == 0) %}
 
-                {% set all_done = false %}
-                {% if total_count > 0 and remaining_items.count == 0 %}
-                    {% set all_done = true %}
-                {% endif %}
+                <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;"
+                         {{ '' if all_done else 'open' }}>
 
-                {% if not all_done %}
-                <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;" open>
-                {% else %}
-                <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;">
-                {% endif %}
-                    
                     <summary class="routine-summary {{ 'routine-done' if all_done }}">
                         <div>
                             <span>{{ routine }}</span>
-                            <a href="/delete-routine/{{ routine }}" style="color: #ff4757; font-size: 0.8rem; margin-left: 10px; text-decoration: none; font-weight: normal;" onclick="return confirm('Clear this whole routine container?');">
+                            <a href="/delete-routine/{{ routine }}"
+                               style="color: #ff4757; font-size: 0.8rem; margin-left: 10px; text-decoration: none; font-weight: normal;"
+                               onclick="return confirm('Clear this whole routine container?');">
                                 [Delete Group]
                             </a>
                         </div>
                         <span>{{ '✅ Done' if all_done else '⏳ In Progress' }}</span>
                     </summary>
-                    
+
                     <div style="padding: 10px 0 0 10px; display: flex; flex-direction: column; gap: 10px;">
                         {% for t in routine_tasks %}
                         <div style="border-left: 3px solid #1e90ff; padding-left: 10px; margin-bottom: 5px;">
@@ -370,97 +389,94 @@
                         </div>
                         {% endfor %}
 
-                        <form action="/add-to-routine/{{ routine }}" method="POST" style="display: flex; gap: 5px; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px;">
-                            <input type="text" name="routine_task_content" placeholder="Add extra item to this list..." required style="flex: 1; padding: 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px;">
+                        <form action="/add-to-routine/{{ routine }}" method="POST"
+                              style="display: flex; gap: 5px; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px;">
+                            <input type="text" name="routine_task_content" placeholder="Add extra item to this list..." required
+                                   style="flex: 1; padding: 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px;">
                             <button type="submit" style="background: #1e90ff; font-size: 0.85rem; padding: 5px 10px;">+ Add</button>
                         </form>
                     </div>
                 </details>
             {% endif %}
         {% endfor %}
+
     </div>
 
+    <!-- SCRIPTS -->
     <script>
+        /* Confetti on task completion */
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('confetti') === 'true') {
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             window.history.replaceState({}, document.title, "/");
         }
+
+        /* Logo bounce on confetti */
         const logo = document.getElementById('brand-logo');
         logo.classList.add('celebrate-animation');
-        setTimeout(() => {
-            logo.classList.remove('celebrate-animation');
-        }, 600);
+        setTimeout(() => logo.classList.remove('celebrate-animation'), 600);
     </script>
-    <script>
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const currentTheme = localStorage.getItem('theme');
 
-        if (currentTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-            themeToggleBtn.textContent = '☀️ Light Mode';
+    <script>
+        /* Dark mode toggle — scoped to html element to match CSS */
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark-theme');
+                themeToggleBtn.textContent = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+                themeToggleBtn.textContent = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            }
         }
 
+        /* Sync button text with current saved theme on load */
+        applyTheme(localStorage.getItem('theme') === 'dark');
+
         themeToggleBtn.addEventListener('click', function () {
-            document.body.classList.toggle('dark-theme');
-            
-            let theme = 'light';
-            if (document.body.classList.contains('dark-theme')) {
-                theme = 'dark';
-                themeToggleBtn.textContent = '☀️ Light Mode';
-            } else {
-                themeToggleBtn.textContent = '🌙 Dark Mode';
-            }
-            localStorage.setItem('theme', theme); 
+            applyTheme(!document.documentElement.classList.contains('dark-theme'));
         });
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const overlay = document.getElementById('onboarding-overlay');
-            const slides = document.querySelectorAll('.slide');
-            const dots = document.querySelectorAll('.dot');
-            const actionBtn = document.getElementById('next-slide-btn');
-            
-            let currentSlideIndex = 0;
 
-            
+    <script>
+        /* Onboarding carousel */
+        document.addEventListener("DOMContentLoaded", function () {
+            const overlay   = document.getElementById('onboarding-overlay');
+            const slides    = document.querySelectorAll('.slide');
+            const dots      = document.querySelectorAll('.dot');
+            const actionBtn = document.getElementById('next-slide-btn');
+            let current     = 0;
+
             if (localStorage.getItem('onboarding_completed') === 'true') {
                 overlay.style.display = 'none';
+                return;
             }
 
-            actionBtn.addEventListener('click', function() {
-              
-                slides[currentSlideIndex].classList.remove('active');
-                dots[currentSlideIndex].classList.remove('active');
+            actionBtn.addEventListener('click', function () {
+                slides[current].classList.remove('active');
+                dots[current].classList.remove('active');
+                current++;
 
-                currentSlideIndex++;
-
-                
-                if (currentSlideIndex < slides.length) {
-                    slides[currentSlideIndex].classList.add('active');
-                    dots[currentSlideIndex].classList.add('active');
-
-                    
-                    if (currentSlideIndex === slides.length - 1) {
-                        actionBtn.textContent = "Let's Avoid Stuff! 🚀";
-                        actionBtn.style.background = "#2ed573";
-                        actionBtn.style.boxShadow = "0 4px 10px rgba(46, 213, 115, 0.3)";
+                if (current < slides.length) {
+                    slides[current].classList.add('active');
+                    dots[current].classList.add('active');
+                    if (current === slides.length - 1) {
+                        actionBtn.textContent        = "Let's Avoid Stuff! 🚀";
+                        actionBtn.style.background   = "#2ed573";
+                        actionBtn.style.boxShadow    = "0 4px 10px rgba(46, 213, 115, 0.3)";
                     }
                 } else {
-                    
-                    overlay.style.opacity = '0';
+                    overlay.style.opacity    = '0';
                     overlay.style.visibility = 'hidden';
                     localStorage.setItem('onboarding_completed', 'true');
-                    
-                    
                     setTimeout(() => overlay.remove(), 500);
                 }
             });
         });
     </script>
+
 </body>
 </html>
