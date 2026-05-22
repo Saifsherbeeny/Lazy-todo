@@ -136,6 +136,14 @@
         html.dark-theme h4 {
             color: #e0e0e0 !important;
         }
+        html.dark-theme .modal-box {
+            background-color: #1e1e1e !important;
+            color: #ffffff !important;
+        }
+        html.dark-theme .modal-box p,
+        html.dark-theme .modal-box h3 {
+            color: #ffffff !important;
+        }
 
         /* ================================ */
         /* ONBOARDING CAROUSEL              */
@@ -205,6 +213,139 @@
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+
+        /* ================================ */
+        /* MODALS (Oath + Photo)            */
+        /* ================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 8000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            max-width: 340px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .modal-box h3 { margin: 0 0 12px 0; font-size: 1.4rem; }
+        .modal-box .task-label {
+            background: rgba(46,213,115,0.12);
+            border-left: 3px solid #2ed573;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin: 12px 0;
+            text-align: left;
+        }
+        .modal-box .oath-text {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 14px 0 20px;
+        }
+        .modal-btn-row {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-btn-row button { flex: 1; padding: 10px; font-size: 0.95rem; border-radius: 8px; }
+        .btn-confirm  { background: #2ed573 !important; font-weight: bold; }
+        .btn-cancel   { background: #57606f !important; }
+        .btn-danger   { background: #ff4757 !important; }
+
+        /* Photo modal specifics */
+        #photo-preview {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 12px 0;
+            display: none;
+        }
+        #photo-file-input { display: none; }
+        .photo-upload-label {
+            display: block;
+            padding: 12px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #555;
+            margin: 12px 0;
+            transition: background 0.2s;
+        }
+        .photo-upload-label:hover { background: #e8e8e8; }
+        #photo-loading {
+            display: none;
+            padding: 14px;
+            font-size: 0.95rem;
+            color: #1e90ff;
+        }
+        #photo-result { display: none; margin-top: 14px; }
+        #photo-result-text {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        .result-ok   { background: rgba(46,213,115,0.15); color: #1a8a45; border-left: 3px solid #2ed573; }
+        .result-fail { background: rgba(255,71,87,0.12);  color: #cc2233; border-left: 3px solid #ff4757; }
+
+        /* Verification badge on tasks */
+        .verify-badge {
+            font-size: 0.7rem;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .badge-photo { background: rgba(30,144,255,0.12); color: #1e90ff; }
+        .badge-oath  { background: rgba(46,213,115,0.12); color: #1a8a45; }
+
+        /* Verify-type toggle in add form */
+        .verify-toggle {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 2px;
+        }
+        .verify-toggle label {
+            flex: 1;
+            padding: 7px 4px;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.18s;
+            max-width: 140px;
+        }
+        .verify-toggle input[type="radio"] { display: none; }
+        .verify-toggle input:checked + label {
+            border-color: #1e90ff;
+            background: rgba(30,144,255,0.1);
+            color: #1e90ff;
+        }
     </style>
 </head>
 <body>
@@ -223,6 +364,11 @@
                 <p>We don't do "tasks". We do mini-commitments. When you check off an item, you aren't just crossing a box — you are fulfilling an OATH to yourself.</p>
             </div>
             <div class="slide">
+                <div class="slide-icon">📸</div>
+                <h2>Prove It. Or Swear It.</h2>
+                <p>For tasks you can photograph — a clean desk, a cooked meal, a gym selfie — let AI verify you actually did it. Can't prove it? Swear on your honor instead.</p>
+            </div>
+            <div class="slide">
                 <div class="slide-icon">⚡</div>
                 <h2>Foldable Habits</h2>
                 <p>Inject complete routines (Morning, Night, Travel) into your feed with one tap. They bundle up neatly in folders to keep your screen clean until you're ready.</p>
@@ -231,8 +377,54 @@
                 <div class="dot active"></div>
                 <div class="dot"></div>
                 <div class="dot"></div>
+                <div class="dot"></div>
             </div>
             <button type="button" id="next-slide-btn" class="carousel-btn">Next →</button>
+        </div>
+    </div>
+
+    <!-- ======================== -->
+    <!-- OATH MODAL               -->
+    <!-- ======================== -->
+    <div id="oath-modal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <h3>🛡️ The Oath</h3>
+            <div class="task-label" id="oath-task-label"></div>
+            <p class="oath-text" id="oath-body"></p>
+            <div class="modal-btn-row">
+                <button type="button" class="btn-cancel" onclick="closeModal('oath-modal')">Cancel</button>
+                <button type="button" class="btn-confirm" id="oath-confirm-btn">I Swear It ✊</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== -->
+    <!-- PHOTO VERIFICATION MODAL -->
+    <!-- ======================== -->
+    <div id="photo-modal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <h3>📸 Prove It</h3>
+            <div class="task-label" id="photo-task-label"></div>
+
+            <label class="photo-upload-label" for="photo-file-input" id="photo-upload-label-el">
+                📷 Tap to take / upload a photo
+            </label>
+            <input type="file" id="photo-file-input" accept="image/*" capture="environment">
+            <img id="photo-preview" alt="Your proof photo">
+
+            <div id="photo-loading">🤖 AI is judging your life choices...</div>
+
+            <div id="photo-result">
+                <div id="photo-result-text"></div>
+                <div class="modal-btn-row" id="photo-result-btns">
+                    <!-- filled dynamically -->
+                </div>
+            </div>
+
+            <div class="modal-btn-row" id="photo-submit-row" style="margin-top:10px;">
+                <button type="button" class="btn-cancel" onclick="closeModal('photo-modal')">Cancel</button>
+                <button type="button" class="btn-confirm" id="photo-submit-btn" disabled>Verify ✓</button>
+            </div>
         </div>
     </div>
 
@@ -298,6 +490,18 @@
             <option value="Uni">📚 Uni</option>
             <option value="Travel">✈️ Travel</option>
         </select>
+
+        <!-- Verification type toggle -->
+        <div style="width: 300px; font-size: 0.8rem; font-weight: 600; color: #777; text-align: left; margin-bottom: -2px;">
+            How will you prove it?
+        </div>
+        <div class="verify-toggle" style="width: 300px;">
+            <input type="radio" name="verification_type" id="vt-oath" value="oath" checked>
+            <label for="vt-oath">🛡️ Swear an Oath</label>
+            <input type="radio" name="verification_type" id="vt-photo" value="photo">
+            <label for="vt-photo">📸 AI Photo Proof</label>
+        </div>
+
         <button type="submit" style="background: #2f3542; width: 300px; padding: 8px;">Add Task</button>
     </form>
 
@@ -330,13 +534,20 @@
         <!-- Standalone tasks (no routine) -->
         {% for t in tasks if not t.routine_name %}
         <div class="task-card">
+            <span class="verify-badge {{ 'badge-photo' if t.verification_type == 'photo' else 'badge-oath' }}">
+                {{ '📸 AI Verified' if t.verification_type == 'photo' else '🛡️ Oath' }}
+            </span>
             <h3 class="{{ 'done' if t.is_done }}">{{ t.content }}</h3>
             <p>Due: {{ t.due_date }}{% if t.due_time %} at {{ t.due_time }}{% endif %}</p>
             <p style="font-size: 0.8rem; color: #888;">{{ t.category }}</p>
             {% if not t.is_done %}
-                <a href="/complete/{{ t.id }}" onclick="confetti()">
-                    <button type="button">OATH: I did it.</button>
-                </a>
+                <button type="button"
+                    class="oath-action-btn"
+                    data-task-id="{{ t.id }}"
+                    data-task-content="{{ t.content }}"
+                    data-verify-type="{{ t.verification_type }}">
+                    {{ '📸 Prove It' if t.verification_type == 'photo' else 'OATH: I did it.' }}
+                </button>
             {% else %}
                 <p style="color: purple; font-weight: bold;">{{ t.status_message }}</p>
                 <span>✅ Completed</span>
@@ -378,9 +589,14 @@
                             <span class="{{ 'done' if t.is_done }}" style="font-weight: 500; font-size: 1rem;">{{ t.content }}</span>
                             <div style="margin-top: 5px; display: flex; gap: 10px; align-items: center;">
                                 {% if not t.is_done %}
-                                    <a href="/complete/{{ t.id }}" onclick="confetti()" style="text-decoration: none;">
-                                        <button type="button" style="padding: 3px 8px; font-size: 0.8rem; background: #2ed573;">OATH</button>
-                                    </a>
+                                    <button type="button"
+                                        class="oath-action-btn"
+                                        data-task-id="{{ t.id }}"
+                                        data-task-content="{{ t.content }}"
+                                        data-verify-type="{{ t.verification_type }}"
+                                        style="padding: 3px 8px; font-size: 0.8rem; background: #2ed573;">
+                                        {{ '📸' if t.verification_type == 'photo' else 'OATH' }}
+                                    </button>
                                 {% else %}
                                     <span style="color: green; font-size: 0.85rem;">✅ Done</span>
                                 {% endif %}
@@ -437,7 +653,9 @@
         © 2026 OATH
     </footer>
 
-    <!-- SCRIPTS -->
+    <!-- ================================================ -->
+    <!-- SCRIPTS                                          -->
+    <!-- ================================================ -->
     <script>
         /* Confetti on task completion */
         const urlParams = new URLSearchParams(window.location.search);
@@ -453,7 +671,7 @@
     </script>
 
     <script>
-        /* Dark mode toggle — scoped to html element to match CSS */
+        /* Dark mode toggle */
         const themeToggleBtn = document.getElementById('theme-toggle');
 
         function applyTheme(isDark) {
@@ -468,7 +686,6 @@
             }
         }
 
-        /* Sync button text with current saved theme on load */
         applyTheme(localStorage.getItem('theme') === 'dark');
 
         themeToggleBtn.addEventListener('click', function () {
@@ -499,9 +716,9 @@
                     slides[current].classList.add('active');
                     dots[current].classList.add('active');
                     if (current === slides.length - 1) {
-                        actionBtn.textContent        = "Let's Avoid Stuff! 🚀";
-                        actionBtn.style.background   = "#2ed573";
-                        actionBtn.style.boxShadow    = "0 4px 10px rgba(46, 213, 115, 0.3)";
+                        actionBtn.textContent      = "Let's Avoid Stuff! 🚀";
+                        actionBtn.style.background = "#2ed573";
+                        actionBtn.style.boxShadow  = "0 4px 10px rgba(46, 213, 115, 0.3)";
                     }
                 } else {
                     overlay.style.opacity    = '0';
@@ -511,6 +728,205 @@
                 }
             });
         });
+    </script>
+
+    <!-- ================================================ -->
+    <!-- OATH + PHOTO VERIFICATION ENGINE                 -->
+    <!-- ================================================ -->
+    <script>
+    (function () {
+
+        /* ---- Helpers ---- */
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        window.closeModal = closeModal; // expose for inline onclick
+
+        function completeTask(taskId) {
+            window.location.href = '/complete/' + taskId;
+        }
+
+        /* ---- Oath Modal ---- */
+
+        let pendingOathTaskId = null;
+
+        function openOathModal(taskId, taskContent) {
+            pendingOathTaskId = taskId;
+            document.getElementById('oath-task-label').textContent = taskContent;
+            document.getElementById('oath-body').textContent =
+                'I swear on my word that I have completed this task. '
+                + 'No shortcuts. No lies. This is my oath to myself.';
+            openModal('oath-modal');
+        }
+
+        document.getElementById('oath-confirm-btn').addEventListener('click', function () {
+            closeModal('oath-modal');
+            if (pendingOathTaskId !== null) {
+                confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+                completeTask(pendingOathTaskId);
+            }
+        });
+
+        /* ---- Photo Modal ---- */
+
+        let pendingPhotoTaskId = null;
+        let selectedImageB64   = null;
+
+        const photoFileInput    = document.getElementById('photo-file-input');
+        const photoPreview      = document.getElementById('photo-preview');
+        const photoLoading      = document.getElementById('photo-loading');
+        const photoResult       = document.getElementById('photo-result');
+        const photoResultText   = document.getElementById('photo-result-text');
+        const photoResultBtns   = document.getElementById('photo-result-btns');
+        const photoSubmitBtn    = document.getElementById('photo-submit-btn');
+        const photoSubmitRow    = document.getElementById('photo-submit-row');
+        const photoUploadLabel  = document.getElementById('photo-upload-label-el');
+
+        function openPhotoModal(taskId, taskContent) {
+            pendingPhotoTaskId = taskId;
+            selectedImageB64   = null;
+
+            document.getElementById('photo-task-label').textContent = taskContent;
+            photoPreview.style.display    = 'none';
+            photoPreview.src              = '';
+            photoLoading.style.display    = 'none';
+            photoResult.style.display     = 'none';
+            photoResultText.textContent   = '';
+            photoResultBtns.innerHTML     = '';
+            photoSubmitBtn.disabled       = true;
+            photoSubmitRow.style.display  = 'flex';
+            photoUploadLabel.style.display = 'block';
+            photoFileInput.value          = '';
+
+            openModal('photo-modal');
+        }
+
+        photoFileInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                photoPreview.src           = e.target.result;
+                photoPreview.style.display = 'block';
+                // Strip the data URL prefix to get raw base64
+                selectedImageB64           = e.target.result.split(',')[1];
+                photoSubmitBtn.disabled    = false;
+                photoResult.style.display  = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        photoSubmitBtn.addEventListener('click', async function () {
+            if (!selectedImageB64) return;
+
+            // Show loading state
+            photoSubmitRow.style.display   = 'none';
+            photoUploadLabel.style.display = 'none';
+            photoLoading.style.display     = 'block';
+            photoResult.style.display      = 'none';
+
+            try {
+                const resp = await fetch('/verify-photo/' + pendingPhotoTaskId, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ image: selectedImageB64 }),
+                });
+                const data = await resp.json();
+
+                photoLoading.style.display = 'none';
+                photoResult.style.display  = 'block';
+
+                if (data.error) {
+                    showPhotoError('⚠️ ' + data.error);
+                    return;
+                }
+
+                if (data.confirmed) {
+                    photoResultText.textContent  = '✅ ' + data.reason;
+                    photoResultText.className    = 'result-ok';
+                    photoResultBtns.innerHTML    =
+                        '<button type="button" class="btn-confirm" id="photo-done-btn" style="width:100%;padding:10px;border-radius:8px;">Complete Task 🎉</button>';
+                    document.getElementById('photo-done-btn').addEventListener('click', function () {
+                        closeModal('photo-modal');
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                        completeTask(pendingPhotoTaskId);
+                    });
+                } else {
+                    photoResultText.textContent = '❌ ' + data.reason;
+                    photoResultText.className   = 'result-fail';
+                    photoResultBtns.innerHTML   =
+                        '<button type="button" class="btn-cancel" id="photo-retry-btn" style="padding:10px;border-radius:8px;flex:1;">Try Again</button>'
+                        + '<button type="button" class="btn-danger" id="photo-oath-btn" style="padding:10px;border-radius:8px;flex:1;">Swear Instead</button>';
+
+                    document.getElementById('photo-retry-btn').addEventListener('click', function () {
+                        // Reset to upload state
+                        photoResult.style.display      = 'none';
+                        photoSubmitRow.style.display   = 'flex';
+                        photoUploadLabel.style.display = 'block';
+                        photoPreview.style.display     = 'none';
+                        photoPreview.src               = '';
+                        photoSubmitBtn.disabled        = true;
+                        selectedImageB64               = null;
+                        photoFileInput.value           = '';
+                    });
+
+                    document.getElementById('photo-oath-btn').addEventListener('click', function () {
+                        closeModal('photo-modal');
+                        const label = document.getElementById('photo-task-label').textContent;
+                        openOathModal(pendingPhotoTaskId, label);
+                    });
+                }
+
+            } catch (err) {
+                photoLoading.style.display = 'none';
+                showPhotoError('Network error. Check your connection and try again.');
+            }
+        });
+
+        function showPhotoError(msg) {
+            photoResult.style.display   = 'block';
+            photoResultText.textContent = msg;
+            photoResultText.className   = 'result-fail';
+            photoResultBtns.innerHTML   =
+                '<button type="button" class="btn-cancel" style="width:100%;padding:10px;border-radius:8px;" '
+                + 'onclick="closeModal(\'photo-modal\')">Close</button>';
+            photoSubmitRow.style.display   = 'none';
+            photoUploadLabel.style.display = 'none';
+        }
+
+        /* ---- Wire up all OATH / Prove It buttons ---- */
+
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.oath-action-btn');
+            if (!btn) return;
+
+            const taskId      = btn.dataset.taskId;
+            const taskContent = btn.dataset.taskContent;
+            const verifyType  = btn.dataset.verifyType;
+
+            if (verifyType === 'photo') {
+                openPhotoModal(taskId, taskContent);
+            } else {
+                openOathModal(taskId, taskContent);
+            }
+        });
+
+        /* ---- Close modals on backdrop click ---- */
+        document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+    })();
     </script>
 
 </body>

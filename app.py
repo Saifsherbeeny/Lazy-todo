@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import random
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -6,6 +6,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from werkzeug.middleware.proxy_fix import ProxyFix
 import os
+import json
+import requests as http_req
+from flask_wtf.csrf import CSRFProtect, csrf_exempt
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -18,7 +21,7 @@ if database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.sqlite'
-app.config['SESSION_COOKIE_SECURE'] = False  # temporarily off — re-enable before production
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -81,7 +84,7 @@ WISDOM_QUOTES = [
     {"text": "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", "author": "Aristotle"},
     {"text": "Concentrate all your thoughts upon the work at hand. The sun's rays do not burn until brought to a focus.", "author": "Alexander Graham Bell"},
     {"text": "It always seems impossible until it's done.", "author": "Nelson Mandela"},
-    {"text": "True wealth is the wealth of the soul.", "author": "Prophet Muhammad (Hadith)"},
+    {"text": "True wealth is the wealth of the soul.", "author": "Prophet Muhammad"},
     {"text": "The mind is everything. What you think you become.", "author": "Buddha"},
     {"text": "Commit your actions to the Lord, and your plans will succeed.", "author": "Proverbs 16:3"},
     {"text": "You have a right to perform your prescribed duty, but you are not entitled to the fruits of action.", "author": "Bhagavad Gita"},
@@ -98,15 +101,17 @@ class User(UserMixin, db.Model):
     tasks    = db.relationship('Task', backref='owner_user', lazy=True)
 
 class Task(db.Model):
-    id             = db.Column(db.Integer, primary_key=True)
-    content        = db.Column(db.String(200), nullable=False)
-    category       = db.Column(db.String(50), default='General')
-    due_date       = db.Column(db.String(50))
-    due_time       = db.Column(db.String(50))
-    is_done        = db.Column(db.Boolean, default=False)
-    status_message = db.Column(db.String(200), default="")
-    user_id        = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    routine_name   = db.Column(db.String(100), nullable=True)
+    id                = db.Column(db.Integer, primary_key=True)
+    content           = db.Column(db.String(200), nullable=False)
+    category          = db.Column(db.String(50), default='General')
+    due_date          = db.Column(db.String(50))
+    due_time          = db.Column(db.String(50))
+    is_done           = db.Column(db.Boolean, default=False)
+    status_message    = db.Column(db.String(200), default="")
+    user_id           = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    routine_name      = db.Column(db.String(100), nullable=True)
+    # 'oath' = self-sworn completion | 'photo' = AI photo verification required
+    verification_type = db.Column(db.String(10), default='oath', nullable=False, server_default='oath')
 
 
 @login_manager.user_loader
@@ -114,10 +119,7 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-# --- HELPERS ---
-
 def _completion_status(due_date_str):
-    """Returns a status message based on whether the task was completed early, on time, or late."""
     if not due_date_str:
         return "Done... respect."
     try:
@@ -126,23 +128,24 @@ def _completion_status(due_date_str):
         if today < due:
             return "Early! Look at you being productive."
         elif today > due:
-            return "Late... Try and do better."
+            return "Late... do better."
         else:
             return "On time... respect."
     except ValueError:
         return "Done... respect."
 
-def _make_guest_task(content, category, due_date="", due_time="", routine_name=None):
+def _make_guest_task(content, category, due_date="", due_time="", routine_name=None, verification_type="oath"):
     """Returns a guest task dict with default values."""
     return {
-        "id":             random.randint(100000, 999999),
-        "content":        content,
-        "category":       category,
-        "due_date":       due_date,
-        "due_time":       due_time,
-        "is_done":        False,
-        "status_message": "",
-        "routine_name":   routine_name,
+        "id":                random.randint(100000, 999999),
+        "content":           content,
+        "category":          category,
+        "due_date":          due_date,
+        "due_time":          due_time,
+        "is_done":           False,
+        "status_message":    "",
+        "routine_name":      routine_name,
+        "verification_type": verification_type,
     }
 
 
@@ -172,6 +175,7 @@ def signup():
                     is_done=g['is_done'],
                     status_message=g['status_message'],
                     routine_name=g['routine_name'],
+                    verification_type=g.get('verification_type', 'oath'),
                     user_id=new_user.id,
                 ))
             db.session.commit()
@@ -249,6 +253,7 @@ def inject_routine(routine_type):
                 due_date=today,
                 user_id=current_user.id,
                 routine_name=name,
+                verification_type='oath',
             ))
         db.session.commit()
     else:
@@ -293,6 +298,7 @@ def add_custom_routine():
                 due_date=today,
                 user_id=current_user.id,
                 routine_name=custom_name,
+                verification_type='oath',
             ))
         db.session.commit()
     else:
@@ -321,6 +327,7 @@ def add_to_routine(routine_name):
             due_date=today,
             user_id=current_user.id,
             routine_name=routine_name,
+            verification_type='oath',
         ))
         db.session.commit()
     else:
@@ -336,10 +343,11 @@ def add_to_routine(routine_name):
 
 @app.route('/add', methods=['POST'])
 def add_task():
-    content  = request.form.get('new_task')
-    due_date = request.form.get('due_date')
-    due_time = request.form.get('due_time')
-    category = request.form.get('category', 'General')
+    content           = request.form.get('new_task')
+    due_date          = request.form.get('due_date')
+    due_time          = request.form.get('due_time')
+    category          = request.form.get('category', 'General')
+    verification_type = request.form.get('verification_type', 'oath')
 
     if not content:
         return redirect(url_for('home'))
@@ -351,11 +359,17 @@ def add_task():
             due_time=due_time,
             category=category,
             user_id=current_user.id,
+            verification_type=verification_type,
         ))
         db.session.commit()
     else:
         session['guest_tasks'].append(
-            _make_guest_task(content, category, due_date=due_date or "", due_time=due_time or "")
+            _make_guest_task(
+                content, category,
+                due_date=due_date or "",
+                due_time=due_time or "",
+                verification_type=verification_type,
+            )
         )
         session.modified = True
 
@@ -395,6 +409,97 @@ def delete(id):
     return redirect(url_for('home'))
 
 
+# --- AI PHOTO VERIFICATION ---
+
+@app.route('/verify-photo/<int:task_id>', methods=['POST'])
+@csrf_exempt
+def verify_photo(task_id):
+    """
+    Receives a base64 image from the frontend, sends it to OpenAI Vision,
+    and returns JSON { confirmed: bool, reason: str }.
+    """
+    openai_key = os.environ.get('OPENAI_API_KEY')
+    if not openai_key:
+        return jsonify({'error': 'AI verification is not configured on this server.'}), 503
+
+    data       = request.get_json(silent=True) or {}
+    image_b64  = data.get('image', '')
+
+    if not image_b64:
+        return jsonify({'error': 'No image received.'}), 400
+
+    # Get the task description (works for both auth users and guests)
+    task_content = "an unknown task"
+    if current_user.is_authenticated:
+        task = db.session.get(Task, task_id)
+        if task:
+            task_content = task.content
+    else:
+        for t in session.get('guest_tasks', []):
+            if t['id'] == task_id:
+                task_content = t['content']
+                break
+
+    prompt = (
+        f'The user says they completed this task: "{task_content}". '
+        'Does this photo reasonably prove it? '
+        'Be fairly lenient — everyday evidence is fine. '
+        'You must respond in exactly this JSON format:\n'
+        '{\n'
+        '  "confirmed": true,\n'
+        '  "reason": "Your single sentence explanation here."\n'
+        '}\n'
+        'Respond with raw JSON only. Do not include markdown formatting or blocks.'
+    )
+
+    try:
+        resp = http_req.post(
+            'https://api.openai.com/v1/chat/completions',
+            headers={
+                'Authorization': f'Bearer {openai_key}',
+                'Content-Type':  'application/json',
+            },
+            json={
+                'model':      'gpt-4o-mini',
+                'max_tokens': 120,
+                'messages': [{
+                    'role': 'user',
+                    'content': [
+                        {'type': 'text', 'text': prompt},
+                        {
+                            'type':      'image_url',
+                            'image_url': {
+                                'url':    f'data:image/jpeg;base64,{image_b64}',
+                                'detail': 'low',
+                            }
+                        },
+                    ]
+                }]
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+    except Exception as e:
+        return jsonify({'error': f'AI service error: {str(e)}'}), 502
+
+    raw = resp.json()['choices'][0]['message']['content'].strip()
+
+    # Strip any accidental markdown fences
+    if raw.startswith('```'):
+        raw = raw.split('```')[1]
+        if raw.startswith('json'):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError:
+        # Fallback: if we can't parse, be lenient
+        result = {'confirmed': True, 'reason': 'Verification accepted.'}
+
+    return jsonify(result)
+
+
 # --- ACCOUNT & PRIVACY ROUTES ---
 
 @app.route('/delete-account', methods=['POST'])
@@ -418,9 +523,9 @@ def export_data():
     tasks = Task.query.filter_by(user_id=current_user.id).all()
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['content', 'category', 'due_date', 'due_time', 'is_done', 'status_message', 'routine_name'])
+    writer.writerow(['content', 'category', 'due_date', 'due_time', 'is_done', 'status_message', 'routine_name', 'verification_type'])
     for t in tasks:
-        writer.writerow([t.content, t.category, t.due_date, t.due_time, t.is_done, t.status_message, t.routine_name])
+        writer.writerow([t.content, t.category, t.due_date, t.due_time, t.is_done, t.status_message, t.routine_name, t.verification_type])
     output.seek(0)
 
     return Response(
