@@ -8,7 +8,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import json
 import requests as http_req
-from flask_wtf.csrf import CSRFProtect, csrf_exempt
+from flask_wtf.csrf import CSRFProtect
+from functools import wraps
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -28,6 +29,12 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "pool_pre_ping": True,
     "pool_recycle": 300,
 }
+def csrf_exempt(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        return f(*args, **kwargs)
+    wrapped.csrf_exempt = True
+    return wrapped
 
 # TODO: re-add CSRFProtect and Talisman before production deployment
 
