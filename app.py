@@ -539,10 +539,14 @@ def export_data():
 def privacy():
     return render_template('privacy.html')
 
-
-with app.app_context():
-    db.create_all()
-    print("✅ Database tables verified.", flush=True)
+def init_db():
+    with app.app_context():
+        try:
+            db.create_all()
+            print("✅ Database tables verified.", flush=True)
+        except Exception as e:
+            print(f"⚠️ DB init warning: {e}", flush=True)
 
 if __name__ == '__main__':
+    init_db()
     app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
