@@ -6,12 +6,16 @@
     <title>OATH : Lazy To-Do</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
-        /* Apply saved theme before render to avoid flash */
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark-theme');
         }
     </script>
     <style>
+        /* ================================ */
+        /* BASE                             */
+        /* ================================ */
+        *, *::before, *::after { box-sizing: border-box; }
+
         body {
             font-family: sans-serif;
             background-color: #f8f9fa;
@@ -20,8 +24,328 @@
             margin: 0;
             padding: 0;
             transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
         }
 
+        /* ================================ */
+        /* STICKY HEADER                    */
+        /* ================================ */
+        #site-header {
+            position: sticky;
+            top: 0;
+            z-index: 500;
+            background: rgba(248,249,250,0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 18px;
+            transition: background 0.3s;
+        }
+        html.dark-theme #site-header {
+            background: rgba(18,18,18,0.92);
+            border-bottom-color: rgba(255,255,255,0.07);
+        }
+
+        /* Logo in header */
+        #header-logo-wrap {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        #brand-logo {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin: 0;
+            display: inline-block;
+            transition: transform 0.3s ease;
+            cursor: default;
+            user-select: none;
+            line-height: 1;
+        }
+        /* Dark logo image — hidden by default */
+        #logo-dark-img {
+            height: 48px;
+            width: auto;
+            display: none;
+            vertical-align: middle;
+        }
+        /* Light mode: show text, hide image */
+        #logo-text { display: inline; }
+        /* Dark mode: hide text, show image */
+        html.dark-theme #logo-text { display: none; }
+        html.dark-theme #logo-dark-img { display: inline-block; }
+
+        /* Hamburger / profile icon buttons */
+        .icon-btn {
+            background: none;
+            border: none;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 8px;
+            color: #2f3542;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.18s;
+            flex-shrink: 0;
+        }
+        .icon-btn:hover { background: rgba(0,0,0,0.07); }
+        html.dark-theme .icon-btn { color: #e0e0e0; }
+        html.dark-theme .icon-btn:hover { background: rgba(255,255,255,0.08); }
+
+        /* Profile avatar circle */
+        #profile-btn {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: #2ed573;
+            color: #121212;
+            font-weight: 800;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.18s, box-shadow 0.18s;
+        }
+        #profile-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 3px 10px rgba(46,213,115,0.4);
+        }
+        /* Guest avatar */
+        #profile-btn.guest-avatar {
+            background: #57606f;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        /* ================================ */
+        /* SIDEBAR                          */
+        /* ================================ */
+        #sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0);
+            z-index: 1000;
+            pointer-events: none;
+            transition: background 0.3s;
+        }
+        #sidebar-overlay.open {
+            background: rgba(0,0,0,0.45);
+            pointer-events: auto;
+        }
+
+        #sidebar {
+            position: fixed;
+            top: 0; right: 0;
+            height: 100%;
+            width: 280px;
+            background: #ffffff;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+            overflow-y: auto;
+        }
+        #sidebar.open { transform: translateX(0); }
+        html.dark-theme #sidebar { background: #1a1a1a; }
+
+        /* Sidebar header */
+        .sb-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid #eee;
+        }
+        html.dark-theme .sb-header { border-bottom-color: #2a2a2a; }
+
+        .sb-logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #2f3542;
+        }
+        html.dark-theme .sb-logo { color: #fff; }
+        .sb-logo span { color: #2ed573; }
+
+        .sb-close {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #888;
+            padding: 4px 8px;
+            border-radius: 6px;
+            line-height: 1;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sb-close:hover { background: rgba(255,71,87,0.12); color: #ff4757; }
+
+        /* Sidebar profile section */
+        .sb-profile {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        html.dark-theme .sb-profile { border-bottom-color: #2a2a2a; }
+
+        .sb-avatar {
+            width: 54px; height: 54px;
+            border-radius: 50%;
+            background: #2ed573;
+            color: #121212;
+            font-weight: 800;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .sb-avatar.guest { background: #57606f; color: white; font-size: 1.5rem; }
+
+        .sb-username {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #2f3542;
+            margin: 0 0 3px;
+        }
+        html.dark-theme .sb-username { color: #fff; }
+
+        .sb-email {
+            font-size: 0.78rem;
+            color: #888;
+            margin: 0;
+        }
+
+        /* Sidebar sections */
+        .sb-section {
+            padding: 14px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        html.dark-theme .sb-section { border-bottom-color: #2a2a2a; }
+
+        .sb-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #aaa;
+            margin-bottom: 2px;
+        }
+
+        .sb-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+            color: #2f3542;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+        html.dark-theme .sb-btn { color: #e0e0e0; }
+        .sb-btn:hover { background: rgba(0,0,0,0.05); }
+        html.dark-theme .sb-btn:hover { background: rgba(255,255,255,0.07); }
+        .sb-btn .sb-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+
+        .sb-btn.primary { background: #2ed573; color: #121212; }
+        .sb-btn.primary:hover { background: #26c066; }
+        .sb-btn.secondary { background: #f0f0f0; color: #2f3542; }
+        html.dark-theme .sb-btn.secondary { background: #2a2a2a; color: #e0e0e0; }
+        .sb-btn.secondary:hover { background: #e4e4e4; }
+        html.dark-theme .sb-btn.secondary:hover { background: #333; }
+        .sb-btn.danger { color: #ff4757; }
+        .sb-btn.danger:hover { background: rgba(255,71,87,0.08); }
+
+        /* Theme toggle row */
+        .sb-theme-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2f3542;
+        }
+        html.dark-theme .sb-theme-row { color: #e0e0e0; }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px; height: 24px;
+            display: inline-block;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: #ccc;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-switch input:checked + .toggle-track { background: #2ed573; }
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: white;
+            top: 3px; left: 3px;
+            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + .toggle-track::after { transform: translateX(20px); }
+
+        /* Sidebar footer */
+        .sb-footer {
+            padding: 16px 20px;
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.72rem;
+            color: #aaa;
+        }
+        .sb-footer a { color: #aaa; text-decoration: underline; }
+
+        /* ================================ */
+        /* STATS BAR (task progress)        */
+        /* ================================ */
+        #stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding: 8px 0 4px;
+        }
+        .stat-chip {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-chip span { color: #2f3542; font-size: 1rem; }
+        html.dark-theme .stat-chip span { color: #fff; }
+
+        /* ================================ */
+        /* TASK CARDS                       */
+        /* ================================ */
         .task-card {
             margin: 10px auto;
             padding: 20px;
@@ -32,10 +356,7 @@
             transition: background-color 0.3s ease;
         }
 
-        .done {
-            text-decoration: line-through;
-            color: gray;
-        }
+        .done { text-decoration: line-through; color: gray; }
 
         button {
             cursor: pointer;
@@ -56,11 +377,7 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        .routine-done {
-            color: gray !important;
-            text-decoration: line-through !important;
-        }
+        .routine-done { color: gray !important; text-decoration: line-through !important; }
 
         /* Animated eyes */
         .eye {
@@ -92,7 +409,7 @@
         }
         .eye.typing .lids { height: 6px; }
 
-        /* Logo bounce animation */
+        /* Logo bounce */
         @keyframes logoWave {
             0%   { transform: scale(1) translateY(0); }
             25%  { transform: scale(1.1, 0.9) translateY(-12px); }
@@ -100,31 +417,20 @@
             75%  { transform: scale(1.05, 0.95) translateY(-2px); }
             100% { transform: scale(1) translateY(0); }
         }
-        .celebrate-animation {
-            animation: logoWave 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-        }
+        .celebrate-animation { animation: logoWave 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
 
         /* ================================ */
         /* DARK MODE                        */
         /* ================================ */
-        html.dark-theme body {
-            background-color: #121212;
-            color: #ffffff;
-        }
+        html.dark-theme body { background-color: #121212; color: #ffffff; }
         html.dark-theme .task-card,
         html.dark-theme details {
             background-color: #1e1e1e !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
         }
-        html.dark-theme .routine-summary {
-            color: #e0e0e0 !important;
-        }
-        html.dark-theme h2, html.dark-theme h3, html.dark-theme p {
-            color: #ffffff !important;
-        }
-        html.dark-theme input,
-        html.dark-theme select,
-        html.dark-theme textarea {
+        html.dark-theme .routine-summary { color: #e0e0e0 !important; }
+        html.dark-theme h2, html.dark-theme h3, html.dark-theme p { color: #ffffff !important; }
+        html.dark-theme input, html.dark-theme select, html.dark-theme textarea {
             background-color: #2d2d2d !important;
             color: white !important;
             border: 1px solid #444 !important;
@@ -133,24 +439,15 @@
             background-color: #1e1e1e !important;
             border: 1px solid #333 !important;
         }
-        html.dark-theme h4 {
-            color: #e0e0e0 !important;
-        }
-        html.dark-theme .modal-box {
-            background-color: #1e1e1e !important;
-            color: #ffffff !important;
-        }
-        html.dark-theme .modal-box p,
-        html.dark-theme .modal-box h3 {
-            color: #ffffff !important;
-        }
+        html.dark-theme h4 { color: #e0e0e0 !important; }
+        html.dark-theme .modal-box { background-color: #1e1e1e !important; color: #ffffff !important; }
+        html.dark-theme .modal-box p, html.dark-theme .modal-box h3 { color: #ffffff !important; }
 
         /* ================================ */
         /* ONBOARDING CAROUSEL              */
         /* ================================ */
         #onboarding-overlay {
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             background-color: #121212;
             z-index: 9999;
@@ -161,52 +458,19 @@
             color: white;
             transition: opacity 0.5s ease, visibility 0.5s ease;
         }
-        .carousel-container {
-            width: 85%;
-            max-width: 360px;
-            text-align: center;
-            position: relative;
-        }
-        .slide {
-            display: none;
-            animation: fadeIn 0.4s ease-in-out;
-        }
+        .carousel-container { width: 85%; max-width: 360px; text-align: center; position: relative; }
+        .slide { display: none; animation: fadeIn 0.4s ease-in-out; }
         .slide.active { display: block; }
         .slide-icon { font-size: 4rem; margin-bottom: 20px; }
-        .slide h2 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: #1e90ff !important;
-        }
-        .slide p {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: #ccc !important;
-            margin-bottom: 30px;
-        }
-        .carousel-dots {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 30px;
-        }
-        .dot {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            background-color: #444;
-            transition: background-color 0.3s;
-        }
+        .slide h2 { font-size: 1.8rem; margin-bottom: 15px; color: #1e90ff !important; }
+        .slide p { font-size: 1rem; line-height: 1.6; color: #ccc !important; margin-bottom: 30px; }
+        .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 30px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background-color: #444; transition: background-color 0.3s; }
         .dot.active { background-color: #1e90ff; }
         .carousel-btn {
-            background: #1e90ff;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            width: 100%;
+            background: #1e90ff; color: white; border: none;
+            padding: 12px 30px; font-size: 1rem; font-weight: bold;
+            border-radius: 25px; cursor: pointer; width: 100%;
             box-shadow: 0 4px 10px rgba(30, 144, 255, 0.3);
         }
         @keyframes fadeIn {
@@ -215,7 +479,7 @@
         }
 
         /* ================================ */
-        /* MODALS (Oath + Photo)            */
+        /* MODALS                           */
         /* ================================ */
         .modal-overlay {
             display: none;
@@ -226,15 +490,11 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            box-sizing: border-box;
         }
         .modal-overlay.active { display: flex; }
         .modal-box {
-            background: white;
-            border-radius: 16px;
-            padding: 28px 24px;
-            max-width: 340px;
-            width: 100%;
+            background: white; border-radius: 16px; padding: 28px 24px;
+            max-width: 340px; width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             text-align: center;
             animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -245,107 +505,65 @@
         }
         .modal-box h3 { margin: 0 0 12px 0; font-size: 1.4rem; }
         .modal-box .task-label {
-            background: rgba(46,213,115,0.12);
-            border-left: 3px solid #2ed573;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin: 12px 0;
-            text-align: left;
+            background: rgba(46,213,115,0.12); border-left: 3px solid #2ed573;
+            border-radius: 6px; padding: 8px 12px;
+            font-weight: 600; font-size: 0.95rem; margin: 12px 0; text-align: left;
         }
         .modal-box .oath-text {
-            font-style: italic;
-            color: #555;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            margin: 14px 0 20px;
+            font-style: italic; color: #555; font-size: 0.9rem;
+            line-height: 1.6; margin: 14px 0 20px;
         }
-        .modal-btn-row {
-            display: flex;
-            gap: 10px;
-        }
+        .modal-btn-row { display: flex; gap: 10px; }
         .modal-btn-row button { flex: 1; padding: 10px; font-size: 0.95rem; border-radius: 8px; }
         .btn-confirm  { background: #2ed573 !important; font-weight: bold; }
         .btn-cancel   { background: #57606f !important; }
         .btn-danger   { background: #ff4757 !important; }
 
-        /* Photo modal specifics */
-        #photo-preview {
-            max-width: 100%;
-            border-radius: 10px;
-            margin: 12px 0;
-            display: none;
-        }
+        /* Photo modal */
+        #photo-preview { max-width: 100%; border-radius: 10px; margin: 12px 0; display: none; }
         #photo-file-input { display: none; }
         .photo-upload-label {
-            display: block;
-            padding: 12px;
-            background: #f0f0f0;
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            color: #555;
-            margin: 12px 0;
-            transition: background 0.2s;
+            display: block; padding: 12px;
+            background: #f0f0f0; border: 2px dashed #ccc;
+            border-radius: 10px; cursor: pointer;
+            font-size: 0.9rem; color: #555; margin: 12px 0; transition: background 0.2s;
         }
         .photo-upload-label:hover { background: #e8e8e8; }
-        #photo-loading {
-            display: none;
-            padding: 14px;
-            font-size: 0.95rem;
-            color: #1e90ff;
-        }
+        #photo-loading { display: none; padding: 14px; font-size: 0.95rem; color: #1e90ff; }
         #photo-result { display: none; margin-top: 14px; }
-        #photo-result-text {
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 12px;
-        }
+        #photo-result-text { padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; margin-bottom: 12px; }
         .result-ok   { background: rgba(46,213,115,0.15); color: #1a8a45; border-left: 3px solid #2ed573; }
         .result-fail { background: rgba(255,71,87,0.12);  color: #cc2233; border-left: 3px solid #ff4757; }
 
-        /* Verification badge on tasks */
+        /* Verify badge */
         .verify-badge {
-            font-size: 0.7rem;
-            padding: 2px 7px;
-            border-radius: 20px;
-            font-weight: 600;
-            letter-spacing: 0.03em;
-            display: inline-block;
-            margin-bottom: 4px;
+            font-size: 0.7rem; padding: 2px 7px; border-radius: 20px;
+            font-weight: 600; letter-spacing: 0.03em; display: inline-block; margin-bottom: 4px;
         }
         .badge-photo { background: rgba(30,144,255,0.12); color: #1e90ff; }
         .badge-oath  { background: rgba(46,213,115,0.12); color: #1a8a45; }
 
-        /* Verify-type toggle in add form */
-        .verify-toggle {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 2px;
-        }
+        /* Verify toggle */
+        .verify-toggle { display: flex; gap: 8px; justify-content: center; margin-top: 2px; }
         .verify-toggle label {
-            flex: 1;
-            padding: 7px 4px;
-            border: 1.5px solid #ccc;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #555;
-            transition: all 0.18s;
-            max-width: 140px;
+            flex: 1; padding: 7px 4px; border: 1.5px solid #ccc;
+            border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+            color: #555; transition: all 0.18s; max-width: 140px;
         }
         .verify-toggle input[type="radio"] { display: none; }
-        .verify-toggle input:checked + label {
-            border-color: #1e90ff;
-            background: rgba(30,144,255,0.1);
-            color: #1e90ff;
+        .verify-toggle input:checked + label { border-color: #1e90ff; background: rgba(30,144,255,0.1); color: #1e90ff; }
+
+        /* Delete confirm modal inside sidebar */
+        #sb-delete-confirm {
+            display: none;
+            background: rgba(255,71,87,0.08);
+            border: 1px solid #ff4757;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 0.83rem;
+            text-align: left;
         }
+        #sb-delete-confirm p { color: #ff4757 !important; margin: 0 0 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -371,7 +589,7 @@
             <div class="slide">
                 <div class="slide-icon">⚡</div>
                 <h2>Foldable Habits</h2>
-                <p>Inject complete routines (Morning, Night, Travel) into your feed with one tap. They bundle up neatly in folders to keep your screen clean until you're ready.</p>
+                <p>Inject complete routines (Morning, Night, Travel) into your feed with one tap. They bundle up neatly in folders to keep your screen clean.</p>
             </div>
             <div class="carousel-dots">
                 <div class="dot active"></div>
@@ -383,9 +601,7 @@
         </div>
     </div>
 
-    <!-- ======================== -->
-    <!-- OATH MODAL               -->
-    <!-- ======================== -->
+    <!-- OATH MODAL -->
     <div id="oath-modal" class="modal-overlay" role="dialog" aria-modal="true">
         <div class="modal-box">
             <h3>🛡️ The Oath</h3>
@@ -398,29 +614,21 @@
         </div>
     </div>
 
-    <!-- ======================== -->
-    <!-- PHOTO VERIFICATION MODAL -->
-    <!-- ======================== -->
+    <!-- PHOTO MODAL -->
     <div id="photo-modal" class="modal-overlay" role="dialog" aria-modal="true">
         <div class="modal-box">
             <h3>📸 Prove It</h3>
             <div class="task-label" id="photo-task-label"></div>
-
             <label class="photo-upload-label" for="photo-file-input" id="photo-upload-label-el">
                 📷 Tap to take / upload a photo
             </label>
             <input type="file" id="photo-file-input" accept="image/*" capture="environment">
             <img id="photo-preview" alt="Your proof photo">
-
             <div id="photo-loading">🤖 AI is judging your life choices...</div>
-
             <div id="photo-result">
                 <div id="photo-result-text"></div>
-                <div class="modal-btn-row" id="photo-result-btns">
-                    <!-- filled dynamically -->
-                </div>
+                <div class="modal-btn-row" id="photo-result-btns"></div>
             </div>
-
             <div class="modal-btn-row" id="photo-submit-row" style="margin-top:10px;">
                 <button type="button" class="btn-cancel" onclick="closeModal('photo-modal')">Cancel</button>
                 <button type="button" class="btn-confirm" id="photo-submit-btn" disabled>Verify ✓</button>
@@ -428,31 +636,151 @@
         </div>
     </div>
 
-    <!-- HEADER -->
-    <div style="text-align: center; margin-top: 20px; user-select: none;">
-        <h1 id="brand-logo" style="font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin: 0; display: inline-block; transition: transform 0.3s ease;">
-            Oath<span id="logo-dot" style="color: #2ed573; transition: color 0.3s ease;">.</span>
-        </h1>
-        <p style="font-size: 0.75rem; margin: 2px 0 0 0; opacity: 0.6; font-weight: 500;">we promise to keep it weird</p>
+    <!-- SIDEBAR OVERLAY -->
+    <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" role="dialog" aria-label="Menu">
+        <div class="sb-header">
+            <span class="sb-logo">Oath<span>.</span></span>
+            <button class="sb-close" onclick="closeSidebar()" aria-label="Close menu">×</button>
+        </div>
+
+        <!-- Profile section -->
+        <div class="sb-profile">
+            {% if not is_guest %}
+                <div class="sb-avatar" id="sb-avatar-logged">{{ name.split('@')[0][0].upper() }}</div>
+                <p class="sb-username">{{ name.split('@')[0] }}</p>
+                <p class="sb-email">{{ name }}</p>
+            {% else %}
+                <div class="sb-avatar guest">👤</div>
+                <p class="sb-username">Guest</p>
+                <p class="sb-email">Not signed in</p>
+            {% endif %}
+        </div>
+
+        {% if is_guest %}
+        <!-- Guest: auth actions -->
+        <div class="sb-section">
+            <div class="sb-section-title">Get Started</div>
+            <a href="/signup" class="sb-btn primary" onclick="closeSidebar()">
+                <span class="sb-icon">✨</span> Create Account
+            </a>
+            <a href="/login" class="sb-btn secondary" onclick="closeSidebar()">
+                <span class="sb-icon">🔑</span> Log In
+            </a>
+        </div>
+        {% else %}
+        <!-- Logged in: account actions -->
+        <div class="sb-section">
+            <div class="sb-section-title">My Account</div>
+            <a href="/export-data" class="sb-btn" onclick="closeSidebar()">
+                <span class="sb-icon">📥</span> Export Data (CSV)
+            </a>
+            <button type="button" class="sb-btn danger"
+                    onclick="document.getElementById('sb-delete-confirm').style.display='block'; this.style.display='none';">
+                <span class="sb-icon">🗑️</span> Delete Account
+            </button>
+            <div id="sb-delete-confirm">
+                <p>⚠️ Permanently deletes your account and all tasks. No undo.</p>
+                <form action="/delete-account" method="POST" style="display:flex;gap:8px;">
+                    <button type="submit" style="background:#ff4757;flex:1;padding:8px;border-radius:8px;font-size:0.82rem;">Yes, delete</button>
+                    <button type="button"
+                            style="background:#57606f;flex:1;padding:8px;border-radius:8px;font-size:0.82rem;"
+                            onclick="document.getElementById('sb-delete-confirm').style.display='none'; this.closest('.sb-section').querySelector('.danger').style.display='';">
+                        Cancel
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Theme toggle -->
+        <div class="sb-section">
+            <div class="sb-section-title">Appearance</div>
+            <div class="sb-theme-row">
+                <span>🌙 Dark Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="theme-toggle-sb">
+                    <div class="toggle-track"></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Links -->
+        <div class="sb-section">
+            <div class="sb-section-title">Info</div>
+            <a href="/privacy" class="sb-btn" onclick="closeSidebar()">
+                <span class="sb-icon">🔒</span> Privacy Policy
+            </a>
+            <a href="mailto:hello@oathapp.tech" class="sb-btn">
+                <span class="sb-icon">✉️</span> Contact Us
+            </a>
+        </div>
+
+        {% if not is_guest %}
+        <div class="sb-section">
+            <a href="/logout" class="sb-btn danger">
+                <span class="sb-icon">🚪</span> Log Out
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="sb-footer">
+            © 2026 OATH · <a href="/privacy">Privacy</a><br>
+            <span style="font-size:0.65rem;opacity:0.6;">we promise to keep it weird</span>
+        </div>
     </div>
 
-    <!-- TOP BAR -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
-        <button id="theme-toggle" type="button" style="background: #57606f; font-size: 0.85rem; padding: 5px 10px;">
-            {% if request.cookies.get('theme') == 'dark' %}☀️ Light Mode{% else %}🌙 Dark Mode{% endif %}
-        </button>
-        {% if not is_guest %}
-            <a href="/logout" style="color: #ff4757; text-decoration: none; font-weight: bold;">Logout</a>
-        {% else %}
-            <a href="/login" style="color: #2ed573; text-decoration: none; font-weight: bold;">Login</a>
-        {% endif %}
-    </div>
+    <!-- ======================== -->
+    <!-- STICKY HEADER            -->
+    <!-- ======================== -->
+    <header id="site-header">
+        <!-- Left: task counter -->
+        <div style="flex:1; text-align:left;">
+            <span id="tasks-left-chip" style="font-size:0.75rem;font-weight:700;color:#888;"></span>
+        </div>
+
+        <!-- Center: Logo -->
+        <div id="header-logo-wrap">
+            <h1 id="brand-logo">
+                <span id="logo-text">Oath<span style="color:#2ed573;">.</span></span>
+                <img id="logo-dark-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCASwBkADASIAAhEBAxEB/8QAHQABAAICAwEBAAAAAAAAAAAAAAcIBQYCBAkDAf/EAFUQAQACAQICBQYGCwwIBQUAAAABAgMEBQYRBwgSITETN0FRYXEic4GRsbMUMjNCcnWChJKh0xUWFxgjNlJVVmKUoiRDlaSywdHSJ6PCw/BTY3SD4f/EABwBAQACAwEBAQAAAAAAAAAAAAAEBQMGBwgCAf/EAEcRAQABAwEEBQgGBwYFBQAAAAABAgMEEQUGITEHEkFRcTIzNWFygZGxEyKhssHRFBUjQnPC8BYXNFNUYiRSktLhJWOCovH/2gAMAwEAAhEDEQA/AKZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//2Q==" alt="Oath." />
+            </h1>
+        </div>
+
+        <!-- Right: Profile / Menu -->
+        <div style="flex:1; display:flex; justify-content:flex-end;">
+            <button id="profile-btn" onclick="openSidebar()" aria-label="Open menu">
+                {% if not is_guest %}
+                    {{ name.split('@')[0][0].upper() }}
+                {% else %}
+                    👤
+                {% endif %}
+            </button>
+            {% if is_guest %}
+            <script>document.getElementById('profile-btn').classList.add('guest-avatar');</script>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- TAGLINE -->
+    <p style="font-size: 0.72rem; margin: 6px 0 0 0; opacity: 0.55; font-weight: 500;">we promise to keep it weird</p>
 
     <!-- WELCOME + WISDOM -->
-    <h1 style="margin-top: 10px; font-size: 1.8rem;">
+    <h1 style="margin-top: 14px; font-size: 1.8rem;">
         Welcome, <span style="color: #1e90ff;">{{ name.split('@')[0] }}</span>
     </h1>
-    <div style="margin: 20px auto; max-width: 340px; padding: 15px; border-radius: 10px; border-left: 4px solid #2ed573; text-align: left; background: rgba(46, 213, 115, 0.1);">
+
+    <!-- TASK PROGRESS STATS -->
+    <div id="stats-bar">
+        <div class="stat-chip">✅ Done: <span id="stat-done">{{ tasks|selectattr('is_done')|list|length }}</span></div>
+        <div class="stat-chip">⏳ Left: <span id="stat-left">{{ tasks|rejectattr('is_done')|list|length }}</span></div>
+        <div class="stat-chip">📋 Total: <span id="stat-total">{{ tasks|length }}</span></div>
+    </div>
+
+    <!-- WISDOM QUOTE -->
+    <div style="margin: 16px auto; max-width: 340px; padding: 15px; border-radius: 10px; border-left: 4px solid #2ed573; text-align: left; background: rgba(46, 213, 115, 0.1);">
         <p style="margin: 0; font-style: italic; font-size: 0.95rem; line-height: 1.4; font-weight: 500;">
             "{{ wisdom.text }}"
         </p>
@@ -463,9 +791,9 @@
 
     <!-- GUEST ALERT -->
     {% if is_guest %}
-    <div id="guest-alert" style="background: rgba(255, 165, 0, 0.15); border-left: 4px solid #ffa500; padding: 12px; margin: 15px auto; max-width: 340px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
+    <div id="guest-alert" style="background: rgba(255,165,0,0.15); border-left: 4px solid #ffa500; padding: 12px; margin: 15px auto; max-width: 340px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
         <p style="margin: 0; font-size: 0.85rem; font-weight: 500; color: #ffa500; text-align: left;">
-            ⚠️ Browsing as guest. <a href="/signup" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save progress permanently.
+            ⚠️ Browsing as guest. <a href="/signup" style="color: #fff; text-decoration: underline; font-weight: bold;">Sign up</a> to save permanently.
         </p>
         <button onclick="document.getElementById('guest-alert').style.display='none'" style="background: none; border: none; color: #ffa500; font-weight: bold; cursor: pointer; font-size: 1rem; padding-left: 10px;">×</button>
     </div>
@@ -477,10 +805,8 @@
         <input type="text" name="new_task" placeholder="What are we avoiding?" required
                style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 280px;">
         <div style="display: flex; gap: 8px;">
-            <input type="date" name="due_date"
-                   style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-            <input type="time" name="due_time"
-                   style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+            <input type="date" name="due_date" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+            <input type="time" name="due_time" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
         </div>
         <select name="category" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 300px;">
             <option value="General">📋 General</option>
@@ -490,8 +816,6 @@
             <option value="Uni">📚 Uni</option>
             <option value="Travel">✈️ Travel</option>
         </select>
-
-        <!-- Verification type toggle -->
         <div style="width: 300px; font-size: 0.8rem; font-weight: 600; color: #777; text-align: left; margin-bottom: -2px;">
             How will you prove it?
         </div>
@@ -501,7 +825,6 @@
             <input type="radio" name="verification_type" id="vt-photo" value="photo">
             <label for="vt-photo">📸 AI Photo Proof</label>
         </div>
-
         <button type="submit" style="background: #2f3542; width: 300px; padding: 8px;">Add Task</button>
     </form>
 
@@ -530,8 +853,6 @@
 
     <!-- TASK LIST -->
     <div id="todo-list">
-
-        <!-- Standalone tasks (no routine) -->
         {% for t in tasks if not t.routine_name %}
         <div class="task-card">
             <span class="verify-badge {{ 'badge-photo' if t.verification_type == 'photo' else 'badge-oath' }}">
@@ -541,8 +862,7 @@
             <p>Due: {{ t.due_date }}{% if t.due_time %} at {{ t.due_time }}{% endif %}</p>
             <p style="font-size: 0.8rem; color: #888;">{{ t.category }}</p>
             {% if not t.is_done %}
-                <button type="button"
-                    class="oath-action-btn"
+                <button type="button" class="oath-action-btn"
                     data-task-id="{{ t.id }}"
                     data-task-content="{{ t.content }}"
                     data-verify-type="{{ t.verification_type }}">
@@ -557,7 +877,6 @@
         </div>
         {% endfor %}
 
-        <!-- Routine groups -->
         {% for routine in tasks|map(attribute='routine_name')|unique %}
             {% if routine %}
                 {% set routine_tasks   = tasks|selectattr('routine_name', 'equalto', routine)|list %}
@@ -567,30 +886,24 @@
                     {% if not t.is_done %}{% set remaining_items.count = remaining_items.count + 1 %}{% endif %}
                 {% endfor %}
                 {% set all_done = (total_count > 0 and remaining_items.count == 0) %}
-
                 <details style="max-width: 340px; margin: 15px auto; text-align: left; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px;"
                          {{ '' if all_done else 'open' }}>
-
                     <summary class="routine-summary {{ 'routine-done' if all_done }}">
                         <div>
                             <span>{{ routine }}</span>
                             <a href="/delete-routine/{{ routine }}"
                                style="color: #ff4757; font-size: 0.8rem; margin-left: 10px; text-decoration: none; font-weight: normal;"
-                               onclick="return confirm('Clear this whole routine container?');">
-                                [Delete Group]
-                            </a>
+                               onclick="return confirm('Clear this whole routine?');">[Delete Group]</a>
                         </div>
                         <span>{{ '✅ Done' if all_done else '⏳ In Progress' }}</span>
                     </summary>
-
                     <div style="padding: 10px 0 0 10px; display: flex; flex-direction: column; gap: 10px;">
                         {% for t in routine_tasks %}
                         <div style="border-left: 3px solid #1e90ff; padding-left: 10px; margin-bottom: 5px;">
                             <span class="{{ 'done' if t.is_done }}" style="font-weight: 500; font-size: 1rem;">{{ t.content }}</span>
                             <div style="margin-top: 5px; display: flex; gap: 10px; align-items: center;">
                                 {% if not t.is_done %}
-                                    <button type="button"
-                                        class="oath-action-btn"
+                                    <button type="button" class="oath-action-btn"
                                         data-task-id="{{ t.id }}"
                                         data-task-content="{{ t.content }}"
                                         data-verify-type="{{ t.verification_type }}"
@@ -604,10 +917,9 @@
                             </div>
                         </div>
                         {% endfor %}
-
                         <form action="/add-to-routine/{{ routine }}" method="POST"
                               style="display: flex; gap: 5px; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px;">
-                            <input type="text" name="routine_task_content" placeholder="Add extra item to this list..." required
+                            <input type="text" name="routine_task_content" placeholder="Add extra item..." required
                                    style="flex: 1; padding: 5px; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px;">
                             <button type="submit" style="background: #1e90ff; font-size: 0.85rem; padding: 5px 10px;">+ Add</button>
                         </form>
@@ -615,86 +927,81 @@
                 </details>
             {% endif %}
         {% endfor %}
-
     </div>
-
-    <!-- ACCOUNT SECTION (logged-in users only) -->
-    {% if not is_guest %}
-    <div style="margin: 30px auto; max-width: 340px; padding: 15px; border-radius: 10px; border: 1px solid #e9ecef; background: #f8f9fa; text-align: left;">
-        <h4 style="margin: 0 0 12px 0; color: #495057;">⚙️ My Account</h4>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <a href="/export-data" style="text-decoration: none;">
-                <button type="button" style="background: #1e90ff; width: 100%; font-size: 0.85rem; padding: 7px;">
-                    📥 Export My Data (CSV)
-                </button>
-            </a>
-            <button type="button"
-                    onclick="document.getElementById('delete-account-confirm').style.display='block'; this.style.display='none';"
-                    style="background: #ff4757; width: 100%; font-size: 0.85rem; padding: 7px;">
-                🗑️ Delete My Account
-            </button>
-            <div id="delete-account-confirm" style="display: none; background: rgba(255,71,87,0.08); border: 1px solid #ff4757; border-radius: 8px; padding: 12px; font-size: 0.85rem;">
-                <p style="margin: 0 0 10px 0; color: #ff4757; font-weight: bold;">⚠️ This will permanently delete your account and all your tasks. There is no undo.</p>
-                <form action="/delete-account" method="POST" style="display: flex; gap: 8px;">
-                    <button type="submit" style="background: #ff4757; flex: 1; padding: 7px; font-size: 0.85rem;">Yes, delete everything</button>
-                    <button type="button"
-                            onclick="document.getElementById('delete-account-confirm').style.display='none'; document.querySelector('[onclick*=delete-account-confirm]').style.display='';"
-                            style="background: #57606f; flex: 1; padding: 7px; font-size: 0.85rem;">Cancel</button>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- FOOTER -->
-    <footer style="margin: 30px auto 20px; font-size: 0.75rem; color: #aaa;">
+    <footer style="margin: 40px auto 20px; font-size: 0.75rem; color: #aaa;">
         <a href="/privacy" style="color: #aaa; text-decoration: underline;">Privacy Policy</a>
-        &nbsp;·&nbsp;
-        © 2026 OATH
+        &nbsp;·&nbsp; © 2026 OATH
     </footer>
 
     <!-- ================================================ -->
     <!-- SCRIPTS                                          -->
     <!-- ================================================ -->
     <script>
-        /* Confetti on task completion */
+        /* Confetti on completion */
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('confetti') === 'true') {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             window.history.replaceState({}, document.title, "/");
         }
-
-        /* Logo bounce on confetti */
         const logo = document.getElementById('brand-logo');
         logo.classList.add('celebrate-animation');
         setTimeout(() => logo.classList.remove('celebrate-animation'), 600);
     </script>
 
     <script>
-        /* Dark mode toggle */
-        const themeToggleBtn = document.getElementById('theme-toggle');
+        /* ========================= */
+        /* THEME                     */
+        /* ========================= */
+        const toggleSb = document.getElementById('theme-toggle-sb');
 
         function applyTheme(isDark) {
             if (isDark) {
                 document.documentElement.classList.add('dark-theme');
-                themeToggleBtn.textContent = '☀️ Light Mode';
+                if (toggleSb) toggleSb.checked = true;
                 localStorage.setItem('theme', 'dark');
             } else {
                 document.documentElement.classList.remove('dark-theme');
-                themeToggleBtn.textContent = '🌙 Dark Mode';
+                if (toggleSb) toggleSb.checked = false;
                 localStorage.setItem('theme', 'light');
             }
         }
 
         applyTheme(localStorage.getItem('theme') === 'dark');
 
-        themeToggleBtn.addEventListener('click', function () {
-            applyTheme(!document.documentElement.classList.contains('dark-theme'));
-        });
+        if (toggleSb) {
+            toggleSb.addEventListener('change', function () {
+                applyTheme(this.checked);
+            });
+        }
     </script>
 
     <script>
-        /* Onboarding carousel */
+        /* ========================= */
+        /* SIDEBAR                   */
+        /* ========================= */
+        const sidebar        = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        window.openSidebar  = openSidebar;
+        window.closeSidebar = closeSidebar;
+    </script>
+
+    <script>
+        /* ========================= */
+        /* ONBOARDING                */
+        /* ========================= */
         document.addEventListener("DOMContentLoaded", function () {
             const overlay   = document.getElementById('onboarding-overlay');
             const slides    = document.querySelectorAll('.slide');
@@ -711,14 +1018,13 @@
                 slides[current].classList.remove('active');
                 dots[current].classList.remove('active');
                 current++;
-
                 if (current < slides.length) {
                     slides[current].classList.add('active');
                     dots[current].classList.add('active');
                     if (current === slides.length - 1) {
                         actionBtn.textContent      = "Let's Avoid Stuff! 🚀";
                         actionBtn.style.background = "#2ed573";
-                        actionBtn.style.boxShadow  = "0 4px 10px rgba(46, 213, 115, 0.3)";
+                        actionBtn.style.boxShadow  = "0 4px 10px rgba(46,213,115,0.3)";
                     }
                 } else {
                     overlay.style.opacity    = '0';
@@ -730,40 +1036,24 @@
         });
     </script>
 
-    <!-- ================================================ -->
-    <!-- OATH + PHOTO VERIFICATION ENGINE                 -->
-    <!-- ================================================ -->
+    <!-- OATH + PHOTO VERIFICATION ENGINE -->
     <script>
     (function () {
+        function openModal(id)  { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        window.closeModal = closeModal;
 
-        /* ---- Helpers ---- */
+        function completeTask(taskId) { window.location.href = '/complete/' + taskId; }
 
-        function openModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-        window.closeModal = closeModal; // expose for inline onclick
-
-        function completeTask(taskId) {
-            window.location.href = '/complete/' + taskId;
-        }
-
-        /* ---- Oath Modal ---- */
-
+        /* -- Oath Modal -- */
         let pendingOathTaskId = null;
-
         function openOathModal(taskId, taskContent) {
             pendingOathTaskId = taskId;
             document.getElementById('oath-task-label').textContent = taskContent;
             document.getElementById('oath-body').textContent =
-                'I swear on my word that I have completed this task. '
-                + 'No shortcuts. No lies. This is my oath to myself.';
+                'I swear on my word that I have completed this task. No shortcuts. No lies. This is my oath to myself.';
             openModal('oath-modal');
         }
-
         document.getElementById('oath-confirm-btn').addEventListener('click', function () {
             closeModal('oath-modal');
             if (pendingOathTaskId !== null) {
@@ -772,25 +1062,22 @@
             }
         });
 
-        /* ---- Photo Modal ---- */
-
+        /* -- Photo Modal -- */
         let pendingPhotoTaskId = null;
         let selectedImageB64   = null;
-
-        const photoFileInput    = document.getElementById('photo-file-input');
-        const photoPreview      = document.getElementById('photo-preview');
-        const photoLoading      = document.getElementById('photo-loading');
-        const photoResult       = document.getElementById('photo-result');
-        const photoResultText   = document.getElementById('photo-result-text');
-        const photoResultBtns   = document.getElementById('photo-result-btns');
-        const photoSubmitBtn    = document.getElementById('photo-submit-btn');
-        const photoSubmitRow    = document.getElementById('photo-submit-row');
-        const photoUploadLabel  = document.getElementById('photo-upload-label-el');
+        const photoFileInput   = document.getElementById('photo-file-input');
+        const photoPreview     = document.getElementById('photo-preview');
+        const photoLoading     = document.getElementById('photo-loading');
+        const photoResult      = document.getElementById('photo-result');
+        const photoResultText  = document.getElementById('photo-result-text');
+        const photoResultBtns  = document.getElementById('photo-result-btns');
+        const photoSubmitBtn   = document.getElementById('photo-submit-btn');
+        const photoSubmitRow   = document.getElementById('photo-submit-row');
+        const photoUploadLabel = document.getElementById('photo-upload-label-el');
 
         function openPhotoModal(taskId, taskContent) {
-            pendingPhotoTaskId = taskId;
-            selectedImageB64   = null;
-
+            pendingPhotoTaskId            = taskId;
+            selectedImageB64              = null;
             document.getElementById('photo-task-label').textContent = taskContent;
             photoPreview.style.display    = 'none';
             photoPreview.src              = '';
@@ -802,19 +1089,16 @@
             photoSubmitRow.style.display  = 'flex';
             photoUploadLabel.style.display = 'block';
             photoFileInput.value          = '';
-
             openModal('photo-modal');
         }
 
         photoFileInput.addEventListener('change', function () {
             const file = this.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function (e) {
                 photoPreview.src           = e.target.result;
                 photoPreview.style.display = 'block';
-                // Strip the data URL prefix to get raw base64
                 selectedImageB64           = e.target.result.split(',')[1];
                 photoSubmitBtn.disabled    = false;
                 photoResult.style.display  = 'none';
@@ -824,33 +1108,24 @@
 
         photoSubmitBtn.addEventListener('click', async function () {
             if (!selectedImageB64) return;
-
-            // Show loading state
             photoSubmitRow.style.display   = 'none';
             photoUploadLabel.style.display = 'none';
             photoLoading.style.display     = 'block';
             photoResult.style.display      = 'none';
-
             try {
                 const resp = await fetch('/verify-photo/' + pendingPhotoTaskId, {
-                    method:  'POST',
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ image: selectedImageB64 }),
+                    body: JSON.stringify({ image: selectedImageB64 }),
                 });
                 const data = await resp.json();
-
                 photoLoading.style.display = 'none';
                 photoResult.style.display  = 'block';
-
-                if (data.error) {
-                    showPhotoError('⚠️ ' + data.error);
-                    return;
-                }
-
+                if (data.error) { showPhotoError('⚠️ ' + data.error); return; }
                 if (data.confirmed) {
-                    photoResultText.textContent  = '✅ ' + data.reason;
-                    photoResultText.className    = 'result-ok';
-                    photoResultBtns.innerHTML    =
+                    photoResultText.textContent = '✅ ' + data.reason;
+                    photoResultText.className   = 'result-ok';
+                    photoResultBtns.innerHTML   =
                         '<button type="button" class="btn-confirm" id="photo-done-btn" style="width:100%;padding:10px;border-radius:8px;">Complete Task 🎉</button>';
                     document.getElementById('photo-done-btn').addEventListener('click', function () {
                         closeModal('photo-modal');
@@ -863,9 +1138,7 @@
                     photoResultBtns.innerHTML   =
                         '<button type="button" class="btn-cancel" id="photo-retry-btn" style="padding:10px;border-radius:8px;flex:1;">Try Again</button>'
                         + '<button type="button" class="btn-danger" id="photo-oath-btn" style="padding:10px;border-radius:8px;flex:1;">Swear Instead</button>';
-
                     document.getElementById('photo-retry-btn').addEventListener('click', function () {
-                        // Reset to upload state
                         photoResult.style.display      = 'none';
                         photoSubmitRow.style.display   = 'flex';
                         photoUploadLabel.style.display = 'block';
@@ -875,14 +1148,11 @@
                         selectedImageB64               = null;
                         photoFileInput.value           = '';
                     });
-
                     document.getElementById('photo-oath-btn').addEventListener('click', function () {
                         closeModal('photo-modal');
-                        const label = document.getElementById('photo-task-label').textContent;
-                        openOathModal(pendingPhotoTaskId, label);
+                        openOathModal(pendingPhotoTaskId, document.getElementById('photo-task-label').textContent);
                     });
                 }
-
             } catch (err) {
                 photoLoading.style.display = 'none';
                 showPhotoError('Network error. Check your connection and try again.');
@@ -900,32 +1170,23 @@
             photoUploadLabel.style.display = 'none';
         }
 
-        /* ---- Wire up all OATH / Prove It buttons ---- */
-
+        /* -- Wire all action buttons -- */
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.oath-action-btn');
             if (!btn) return;
-
             const taskId      = btn.dataset.taskId;
             const taskContent = btn.dataset.taskContent;
             const verifyType  = btn.dataset.verifyType;
-
-            if (verifyType === 'photo') {
-                openPhotoModal(taskId, taskContent);
-            } else {
-                openOathModal(taskId, taskContent);
-            }
+            if (verifyType === 'photo') openPhotoModal(taskId, taskContent);
+            else                        openOathModal(taskId, taskContent);
         });
 
-        /* ---- Close modals on backdrop click ---- */
+        /* -- Close modals on backdrop -- */
         document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
             overlay.addEventListener('click', function (e) {
-                if (e.target === overlay) {
-                    overlay.classList.remove('active');
-                }
+                if (e.target === overlay) overlay.classList.remove('active');
             });
         });
-
     })();
     </script>
 
